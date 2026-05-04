@@ -83,7 +83,10 @@ function Dashboard() {
       </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
-        <DataSourceBar
+        <ControlPanel
+          filters={filters}
+          setFilters={setFilters}
+          options={options}
           isUsingMock={isUsingMock}
           recordCount={data.length}
           onLoad={(records) => {
@@ -97,8 +100,6 @@ function Dashboard() {
             setFilters(EMPTY_FILTERS);
           }}
         />
-
-        <FilterBar filters={filters} setFilters={setFilters} options={options} />
 
         {/* KPIs */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
