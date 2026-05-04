@@ -28,7 +28,7 @@ export function CategoryChart({ data }: { data: TrainingRecord[] }) {
     <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm hover:shadow-elevated transition-shadow duration-300 bg-gradient-card">
       <div className="flex items-start gap-3">
         <div className="icon-3d icon-3d-info h-10 w-10 shrink-0">
-          <span className="relative z-10 text-base font-bold">≣</span>
+          <BarChart3 className="h-5 w-5 relative z-10" />
         </div>
         <div>
           <h3 className="font-semibold text-foreground tracking-tight">Completion by Category</h3>
@@ -75,7 +75,7 @@ export function TrendChart({ data }: { data: TrainingRecord[] }) {
     <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm hover:shadow-elevated transition-shadow duration-300 bg-gradient-card">
       <div className="flex items-start gap-3">
         <div className="icon-3d h-10 w-10 shrink-0">
-          <span className="relative z-10 text-base font-bold">↗</span>
+          <LineIcon className="h-5 w-5 relative z-10" />
         </div>
         <div>
           <h3 className="font-semibold text-foreground tracking-tight">Monthly Completion Trend</h3>
