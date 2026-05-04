@@ -8,12 +8,17 @@ import { cn } from "@/lib/utils";
 export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
   const rows = managerPerformance(data);
   return (
-    <Card className="p-5 flex flex-col gap-4">
-      <div>
-        <h3 className="font-semibold text-foreground">Manager Performance</h3>
-        <p className="text-xs text-muted-foreground">
-          Sorted by lowest completion rate first — focus areas at the top
-        </p>
+    <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm hover:shadow-elevated transition-shadow duration-300 bg-gradient-card">
+      <div className="flex items-start gap-3">
+        <div className="icon-3d h-10 w-10 shrink-0">
+          <span className="relative z-10 text-base font-bold">👥</span>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground tracking-tight">Manager Performance</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Sorted by lowest completion rate first — focus areas at the top
+          </p>
+        </div>
       </div>
       <div className="overflow-x-auto -mx-5">
         <Table>
