@@ -6,11 +6,10 @@ import { generateMockTrainingData } from "@/lib/mock-training-data";
 import { applyFilters, computeKpis, uniqueOptions } from "@/lib/training-analytics";
 import { EMPTY_FILTERS, type Filters, type TrainingRecord } from "@/lib/training-types";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { FilterBar } from "@/components/dashboard/FilterBar";
+import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
 import { ManagerPerformance } from "@/components/dashboard/ManagerPerformance";
 import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
-import { DataSourceBar } from "@/components/dashboard/DataSourceBar";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
