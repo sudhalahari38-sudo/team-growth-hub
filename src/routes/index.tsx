@@ -108,21 +108,24 @@ function Dashboard() {
             value={kpis.totalAssigned.toLocaleString()}
             sublabel="trainings"
             formula="COUNT(records)"
-            icon={<GraduationCap className="h-4 w-4" />}
+            tone="primary"
+            icon={<GraduationCap />}
           />
           <KpiCard
             label="Completed"
             value={kpis.completed.toLocaleString()}
             sublabel="trainings"
             formula="COUNT(status = 'Completed')"
-            icon={<CheckCircle2 className="h-4 w-4" />}
+            tone="success"
+            icon={<CheckCircle2 />}
           />
           <KpiCard
             label="Completion Rate"
             value={`${kpis.completionRate.toFixed(1)}%`}
             formula="Completed ÷ Total Assigned"
             rate={kpis.completionRate}
-            icon={<TrendingUp className="h-4 w-4" />}
+            tone="info"
+            icon={<TrendingUp />}
           />
           <KpiCard
             label="Overdue"
@@ -132,14 +135,16 @@ function Dashboard() {
             invertLight
             rawCount={kpis.overdueCount}
             invertThresholds={{ red: 50, yellow: 10 }}
-            icon={<AlertTriangle className="h-4 w-4" />}
+            tone="danger"
+            icon={<AlertTriangle />}
           />
           <KpiCard
             label="Mandatory Compliance"
             value={`${kpis.mandatoryComplianceRate.toFixed(1)}%`}
             formula="Mandatory Completed ÷ Mandatory Assigned"
             rate={kpis.mandatoryComplianceRate}
-            icon={<ShieldCheck className="h-4 w-4" />}
+            tone="warning"
+            icon={<ShieldCheck />}
           />
         </section>
 
