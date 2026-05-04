@@ -1,26 +1,157 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { GraduationCap, CheckCircle2, TrendingUp, AlertTriangle, ShieldCheck } from "lucide-react";
+import { generateMockTrainingData } from "@/lib/mock-training-data";
+import { applyFilters, computeKpis, uniqueOptions } from "@/lib/training-analytics";
+import { EMPTY_FILTERS, type Filters, type TrainingRecord } from "@/lib/training-types";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { FilterBar } from "@/components/dashboard/FilterBar";
+import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
+import { ManagerPerformance } from "@/components/dashboard/ManagerPerformance";
+import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
+import { DataSourceBar } from "@/components/dashboard/DataSourceBar";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Dashboard,
+  head: () => ({
+    meta: [
+      { title: "L&D Dashboard — Training Compliance & Manager Insights" },
+      {
+        name: "description",
+        content:
+          "Manager-facing Learning & Development dashboard tracking completion rates, overdue trainings, manager performance and at-risk employees from Skillsoft Percipio data.",
+      },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+const MOCK = generateMockTrainingData();
+
+function Dashboard() {
+  const [data, setData] = useState<TrainingRecord[]>(MOCK);
+  const [isUsingMock, setIsUsingMock] = useState(true);
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  const filtered = useMemo(() => applyFilters(data, filters), [data, filters]);
+  const kpis = useMemo(() => computeKpis(filtered), [filtered]);
+
+  const options = useMemo(
+    () => ({
+      managers: uniqueOptions(data, "managerName"),
+      departments: uniqueOptions(data, "department"),
+      categories: uniqueOptions(data, "courseCategory"),
+      trainingTypes: uniqueOptions(data, "trainingType"),
+      statuses: uniqueOptions(data, "status"),
+    }),
+    [data],
+  );
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background">
+      <Toaster richColors position="top-right" />
+
+      {/* Header */}
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <GraduationCap className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground leading-tight">
+                Learning & Development Dashboard
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Skillsoft Percipio • Manager view • Updated {new Date().toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-[1400px] mx-auto px-6 py-6 flex flex-col gap-6">
+        <DataSourceBar
+          isUsingMock={isUsingMock}
+          recordCount={data.length}
+          onLoad={(records) => {
+            setData(records);
+            setIsUsingMock(false);
+            setFilters(EMPTY_FILTERS);
+          }}
+          onReset={() => {
+            setData(MOCK);
+            setIsUsingMock(true);
+            setFilters(EMPTY_FILTERS);
+          }}
+        />
+
+        <FilterBar filters={filters} setFilters={setFilters} options={options} />
+
+        {/* KPIs */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <KpiCard
+            label="Total Assigned"
+            value={kpis.totalAssigned.toLocaleString()}
+            sublabel="trainings"
+            formula="COUNT(records)"
+            icon={<GraduationCap className="h-4 w-4" />}
+          />
+          <KpiCard
+            label="Completed"
+            value={kpis.completed.toLocaleString()}
+            sublabel="trainings"
+            formula="COUNT(status = 'Completed')"
+            icon={<CheckCircle2 className="h-4 w-4" />}
+          />
+          <KpiCard
+            label="Completion Rate"
+            value={`${kpis.completionRate.toFixed(1)}%`}
+            formula="Completed ÷ Total Assigned"
+            rate={kpis.completionRate}
+            icon={<TrendingUp className="h-4 w-4" />}
+          />
+          <KpiCard
+            label="Overdue"
+            value={kpis.overdueCount.toLocaleString()}
+            sublabel="needs action"
+            formula="Due Date < Today AND ≠ Completed"
+            invertLight
+            rawCount={kpis.overdueCount}
+            invertThresholds={{ red: 50, yellow: 10 }}
+            icon={<AlertTriangle className="h-4 w-4" />}
+          />
+          <KpiCard
+            label="Mandatory Compliance"
+            value={`${kpis.mandatoryComplianceRate.toFixed(1)}%`}
+            formula="Mandatory Completed ÷ Mandatory Assigned"
+            rate={kpis.mandatoryComplianceRate}
+            icon={<ShieldCheck className="h-4 w-4" />}
+          />
+        </section>
+
+        {/* Charts */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <CategoryChart data={filtered} />
+          <TrendChart data={filtered} />
+        </section>
+
+        {/* Manager performance */}
+        <section>
+          <ManagerPerformance data={filtered} />
+        </section>
+
+        {/* At-risk table */}
+        <section>
+          <AtRiskTable data={filtered} />
+        </section>
+
+        <footer className="text-center text-xs text-muted-foreground py-6 border-t">
+          Built for L&D managers • Traffic light: <span className="text-danger font-medium">red &lt; 60%</span> ·{" "}
+          <span className="text-warning font-medium">yellow 60–80%</span> ·{" "}
+          <span className="text-success font-medium">green &gt; 80%</span>
+        </footer>
+      </main>
     </div>
   );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
 }
