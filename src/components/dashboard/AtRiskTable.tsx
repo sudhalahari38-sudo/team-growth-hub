@@ -16,18 +16,22 @@ export function AtRiskTable({ data }: { data: TrainingRecord[] }) {
   const visible = rows.slice(0, limit);
 
   return (
-    <Card className="p-5 flex flex-col gap-4">
+    <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm hover:shadow-elevated transition-shadow duration-300 bg-gradient-card">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h3 className="font-semibold text-foreground flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-danger" />
-            Overdue / At-Risk Employees
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Sorted by highest risk (most days overdue) first — needs immediate action
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="icon-3d icon-3d-danger h-10 w-10 shrink-0 shadow-glow-brand">
+            <AlertTriangle className="h-5 w-5 relative z-10" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground tracking-tight">
+              Overdue / At-Risk Employees
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Sorted by highest risk (most days overdue) first — needs immediate action
+            </p>
+          </div>
         </div>
-        <Badge variant="destructive" className="text-xs">
+        <Badge variant="destructive" className="text-xs shadow-sm">
           {rows.length} overdue
         </Badge>
       </div>
