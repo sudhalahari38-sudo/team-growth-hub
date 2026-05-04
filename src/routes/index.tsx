@@ -51,26 +51,39 @@ function Dashboard() {
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
 
-      {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-primary" />
+      {/* Corporate hero header */}
+      <header className="relative bg-gradient-hero text-primary-foreground overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(oklch(1_0_0/0.5)_1px,transparent_1px),linear-gradient(90deg,oklch(1_0_0/0.5)_1px,transparent_1px)] [background-size:32px_32px]" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-accent-brand/30 blur-3xl" />
+        <div className="absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-info/20 blur-3xl" />
+        <div className="relative max-w-[1400px] mx-auto px-6 py-7 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="icon-3d icon-3d-brand h-12 w-12 shadow-glow-brand">
+              <GraduationCap className="h-6 w-6 relative z-10" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground leading-tight">
-                Learning & Development Dashboard
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/60 mb-1">
+                Skillsoft Percipio · Manager Console
+              </div>
+              <h1 className="text-xl font-semibold tracking-tight leading-tight">
+                Learning &amp; Development Dashboard
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Skillsoft Percipio • Manager view • Updated {new Date().toLocaleDateString()}
-              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 text-xs">
+            <div className="flex flex-col items-end">
+              <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">Last sync</span>
+              <span className="font-medium tabular-nums">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+            </div>
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">Reporting period</span>
+              <span className="font-medium">Trailing 12 months</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-6 flex flex-col gap-6">
+      <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
         <DataSourceBar
           isUsingMock={isUsingMock}
           recordCount={data.length}
@@ -95,21 +108,24 @@ function Dashboard() {
             value={kpis.totalAssigned.toLocaleString()}
             sublabel="trainings"
             formula="COUNT(records)"
-            icon={<GraduationCap className="h-4 w-4" />}
+            tone="primary"
+            icon={<GraduationCap />}
           />
           <KpiCard
             label="Completed"
             value={kpis.completed.toLocaleString()}
             sublabel="trainings"
             formula="COUNT(status = 'Completed')"
-            icon={<CheckCircle2 className="h-4 w-4" />}
+            tone="success"
+            icon={<CheckCircle2 />}
           />
           <KpiCard
             label="Completion Rate"
             value={`${kpis.completionRate.toFixed(1)}%`}
             formula="Completed ÷ Total Assigned"
             rate={kpis.completionRate}
-            icon={<TrendingUp className="h-4 w-4" />}
+            tone="info"
+            icon={<TrendingUp />}
           />
           <KpiCard
             label="Overdue"
@@ -119,14 +135,16 @@ function Dashboard() {
             invertLight
             rawCount={kpis.overdueCount}
             invertThresholds={{ red: 50, yellow: 10 }}
-            icon={<AlertTriangle className="h-4 w-4" />}
+            tone="danger"
+            icon={<AlertTriangle />}
           />
           <KpiCard
             label="Mandatory Compliance"
             value={`${kpis.mandatoryComplianceRate.toFixed(1)}%`}
             formula="Mandatory Completed ÷ Mandatory Assigned"
             rate={kpis.mandatoryComplianceRate}
-            icon={<ShieldCheck className="h-4 w-4" />}
+            tone="warning"
+            icon={<ShieldCheck />}
           />
         </section>
 
