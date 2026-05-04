@@ -1,0 +1,67 @@
+/**
+ * Simulated authenticated identity + client-side Row-Level Security.
+ *
+ * In production this would come from the auth provider (Lovable Cloud /
+ * Supabase JWT) and RLS would be enforced server-side via Postgres policies
+ * such as:
+ *
+ *   create policy "managers see own team"
+ *   on public.training_records for select
+ *   using (manager_id = auth.uid()
+ *          or exists (select 1 from public.user_roles
+ *                     where user_id = auth.uid() and role = 'leadership'));
+ *
+ * Here we simulate the same boundary by filtering the in-memory dataset
+ * based on the selected identity.
+ */
+import type { TrainingRecord } from "./training-types";
+
+export type IdentityRole = "leadership" | "manager";
+
+export interface Identity {
+  id: string;
+  name: string;
+  role: IdentityRole;
+  /** Manager name as it appears in the dataset (only used when role = manager) */
+  managerName?: string;
+  department?: string;
+}
+
+export const LEADERSHIP_IDENTITY: Identity = {
+  id: "leadership",
+  name: "Leadership View (all teams)",
+  role: "leadership",
+};
+
+/** Build the identity list from the dataset: one per manager + leadership. */
+export function buildIdentities(data: TrainingRecord[]): Identity[] {
+  const map = new Map<string, Identity>();
+  for (const r of data) {
+    if (!map.has(r.managerName)) {
+      map.set(r.managerName, {
+        id: `mgr:${r.managerName}`,
+        name: r.managerName,
+        role: "manager",
+        managerName: r.managerName,
+        department: r.department,
+      });
+    }
+  }
+  const managers = Array.from(map.values()).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  return [LEADERSHIP_IDENTITY, ...managers];
+}
+
+/**
+ * RLS gate. Leadership sees everything; managers see only their own team's
+ * rows (matched by manager_name). Equivalent SQL policy:
+ *   USING (manager_name = current_setting('app.user.manager'))
+ */
+export function applyRls<T extends { managerName: string }>(
+  rows: T[],
+  identity: Identity,
+): T[] {
+  if (identity.role === "leadership") return rows;
+  return rows.filter((r) => r.managerName === identity.managerName);
+}
