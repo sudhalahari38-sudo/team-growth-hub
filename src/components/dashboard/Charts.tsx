@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import type { TrainingRecord } from "@/lib/training-types";
 import { completionByCategory, monthlyCompletionTrend, trafficLight } from "@/lib/training-analytics";
+import { BarChart3, LineChart as LineIcon } from "lucide-react";
 
 const lightColor = (rate: number) => {
   const l = trafficLight(rate);
