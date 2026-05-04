@@ -41,7 +41,7 @@ export function DataSourceBar({ isUsingMock, recordCount, onLoad, onReset }: Dat
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 flex-wrap text-sm">
+    <div className="rounded-xl border border-border/70 bg-card/80 backdrop-blur px-4 py-3 flex items-center justify-between gap-3 flex-wrap text-sm shadow-sm">
       <div className="flex items-center gap-2">
         <span
           className={`h-2 w-2 rounded-full ${isUsingMock ? "bg-warning" : "bg-success"}`}
