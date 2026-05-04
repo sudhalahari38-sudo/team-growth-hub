@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { managerPerformance, lightClasses, trafficLight } from "@/lib/training-analytics";
 import type { TrainingRecord } from "@/lib/training-types";
 import { cn } from "@/lib/utils";
+import { Users } from "lucide-react";
 
 export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
   const rows = managerPerformance(data);
