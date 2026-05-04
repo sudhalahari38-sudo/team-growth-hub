@@ -18,7 +18,7 @@
  *   PERCIPIO_ORG_ID      – your Percipio organization UUID
  *   PERCIPIO_BASE_URL    – optional, defaults to https://api.percipio.com
  */
-import type { TrainingRecord, CourseCategory, TrainingStatus, TrainingType } from "./training-types";
+import type { TrainingRecord, CourseCategory, TrainingStatus, TrainingType } from "@/lib/training-types";
 
 interface PercipioRow {
   userFullName?: string;
