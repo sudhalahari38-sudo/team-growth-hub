@@ -58,7 +58,7 @@ function FilterSelect({
 export function FilterBar({ filters, setFilters, options }: FilterBarProps) {
   const isFiltered = Object.values(filters).some((v) => v !== "all");
   return (
-    <div className="rounded-xl border bg-card p-4 flex flex-wrap items-end gap-3">
+    <div className="rounded-xl border border-border/70 bg-card/80 backdrop-blur p-4 flex flex-wrap items-end gap-3 shadow-sm">
       <FilterSelect
         label="Manager"
         value={filters.manager}
