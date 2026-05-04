@@ -6,11 +6,10 @@ import { generateMockTrainingData } from "@/lib/mock-training-data";
 import { applyFilters, computeKpis, uniqueOptions } from "@/lib/training-analytics";
 import { EMPTY_FILTERS, type Filters, type TrainingRecord } from "@/lib/training-types";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { FilterBar } from "@/components/dashboard/FilterBar";
+import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
 import { ManagerPerformance } from "@/components/dashboard/ManagerPerformance";
 import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
-import { DataSourceBar } from "@/components/dashboard/DataSourceBar";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -84,7 +83,10 @@ function Dashboard() {
       </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
-        <DataSourceBar
+        <ControlPanel
+          filters={filters}
+          setFilters={setFilters}
+          options={options}
           isUsingMock={isUsingMock}
           recordCount={data.length}
           onLoad={(records) => {
@@ -98,8 +100,6 @@ function Dashboard() {
             setFilters(EMPTY_FILTERS);
           }}
         />
-
-        <FilterBar filters={filters} setFilters={setFilters} options={options} />
 
         {/* KPIs */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
