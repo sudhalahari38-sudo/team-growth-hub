@@ -21,6 +21,13 @@ const coursesByCategory: Record<CourseCategory, string[]> = {
   "Non-Technical": ["Effective Communication", "Time Management", "Negotiation Basics", "Presentation Skills", "Business Writing"],
   Compliance: ["Anti-Harassment Training", "Data Privacy & GDPR", "Information Security Awareness", "Code of Conduct", "Anti-Bribery & Corruption"],
   Coaching: ["Coaching for Managers", "Giving Feedback", "1:1 Mastery", "Performance Conversations"],
+  CDP: [
+    "Career Development Program: Foundations",
+    "CDP: Personal Brand & Growth Plan",
+    "CDP: Leadership Track Year 1",
+    "CDP: Cross-functional Rotation",
+    "CDP: Mentorship Essentials",
+  ],
 };
 
 // Deterministic PRNG so dataset is stable across reloads
@@ -68,7 +75,7 @@ export function generateMockTrainingData(): TrainingRecord[] {
     }
   }
 
-  const categories: CourseCategory[] = ["Technical", "Non-Technical", "Compliance", "Coaching"];
+  const categories: CourseCategory[] = ["Technical", "Non-Technical", "Compliance", "Coaching", "CDP"];
 
   for (const emp of employees) {
     const numCourses = 4 + Math.floor(rng() * 5); // 4-8 courses each

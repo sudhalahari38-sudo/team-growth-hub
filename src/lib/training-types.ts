@@ -1,5 +1,5 @@
 export type TrainingStatus = "Completed" | "In Progress" | "Not Started";
-export type CourseCategory = "Technical" | "Non-Technical" | "Compliance" | "Coaching";
+export type CourseCategory = "Technical" | "Non-Technical" | "Compliance" | "Coaching" | "CDP";
 export type TrainingType = "Mandatory" | "Optional";
 
 export interface TrainingRecord {

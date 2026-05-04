@@ -29,6 +29,7 @@ function normalizeStatus(v: string): TrainingStatus {
 
 function normalizeCategory(v: string): CourseCategory {
   const s = v.toLowerCase().trim();
+  if (s.includes("cdp") || s.includes("career")) return "CDP";
   if (s.includes("compli")) return "Compliance";
   if (s.includes("coach")) return "Coaching";
   if (s.includes("non")) return "Non-Technical";
