@@ -12,7 +12,7 @@ export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
     <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm hover:shadow-elevated transition-shadow duration-300 bg-gradient-card">
       <div className="flex items-start gap-3">
         <div className="icon-3d h-10 w-10 shrink-0">
-          <span className="relative z-10 text-base font-bold">👥</span>
+          <Users className="h-5 w-5 relative z-10" />
         </div>
         <div>
           <h3 className="font-semibold text-foreground tracking-tight">Manager Performance</h3>
