@@ -165,3 +165,70 @@ export function lightClasses(l: Light) {
 export function uniqueOptions(data: TrainingRecord[], key: keyof TrainingRecord): string[] {
   return Array.from(new Set(data.map((r) => String(r[key])).filter(Boolean))).sort();
 }
+
+/* -------------------------- Course-level analysis ------------------------ */
+
+export interface CourseRow {
+  courseName: string;
+  category: string;
+  trainingType: string;
+  assigned: number;
+  completed: number;
+  overdue: number;
+  completionRate: number;
+}
+
+export function courseLevelAnalysis(data: TrainingRecord[]): CourseRow[] {
+  const map = new Map<string, CourseRow>();
+  for (const r of data) {
+    const e =
+      map.get(r.courseName) ??
+      {
+        courseName: r.courseName,
+        category: r.courseCategory,
+        trainingType: r.trainingType,
+        assigned: 0,
+        completed: 0,
+        overdue: 0,
+        completionRate: 0,
+      };
+    e.assigned++;
+    if (r.status === "Completed") e.completed++;
+    if (isOverdue(r)) e.overdue++;
+    map.set(r.courseName, e);
+  }
+  return Array.from(map.values())
+    .map((e) => ({ ...e, completionRate: e.assigned ? Math.round((e.completed / e.assigned) * 100) : 0 }))
+    .sort((a, b) => b.assigned - a.assigned);
+}
+
+/* ----------------------------- Forecast ---------------------------------- */
+
+export function forecast(data: TrainingRecord[]) {
+  const totalAssigned = data.length;
+  const completed = data.filter((r) => r.status === "Completed").length;
+  const overdue = data.filter((r) => isOverdue(r)).length;
+  const trend = monthlyCompletionTrend(data);
+  const recentAvg =
+    trend.slice(-3).reduce((s, t) => s + t.completions, 0) /
+    Math.max(1, Math.min(3, trend.length));
+  const projectedCompletions = Math.round(recentAvg * 6);
+  const projectedRate = totalAssigned
+    ? Math.min(100, Math.round(((completed + projectedCompletions) / totalAssigned) * 100))
+    : 0;
+  const targetCompletions = Math.ceil(totalAssigned * 0.8);
+  const additionalNeeded = Math.max(0, targetCompletions - completed);
+  const dueSoon = data.filter((r) => {
+    if (r.status === "Completed") return false;
+    const d = new Date(r.dueDate).getTime() - TODAY.getTime();
+    return d > 0 && d <= 30 * 86400000;
+  }).length;
+
+  return {
+    overdue,
+    projectedRate,
+    additionalNeeded,
+    dueSoon,
+    recentMonthlyAvg: Math.round(recentAvg),
+  };
+}
