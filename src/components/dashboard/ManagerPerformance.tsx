@@ -46,7 +46,13 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
+export function ManagerPerformance({
+  data,
+  onDrill,
+}: {
+  data: TrainingRecord[];
+  onDrill?: (manager: string) => void;
+}) {
   const allRows = managerPerformance(data);
   const [sortKey, setSortKey] = useState<SortKey>("completionRate");
   const [desc, setDesc] = useState(false);
