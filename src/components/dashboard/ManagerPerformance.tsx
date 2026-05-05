@@ -334,9 +334,23 @@ export function ManagerPerformance({
                         ? `⚠️ ${80 - r.completionRate}pp below the 80% target. Coach team this week.`
                         : `🚨 Critical — ${60 - r.completionRate}pp below the 60% floor. Escalate.`}
                     </span>
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
-                      Send nudge
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs">
+                        Send nudge
+                      </Button>
+                      {onDrill && (
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDrill(r.manager);
+                          }}
+                        >
+                          Drill in →
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
