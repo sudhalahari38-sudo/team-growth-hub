@@ -46,7 +46,13 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
+export function ManagerPerformance({
+  data,
+  onDrill,
+}: {
+  data: TrainingRecord[];
+  onDrill?: (manager: string) => void;
+}) {
   const allRows = managerPerformance(data);
   const [sortKey, setSortKey] = useState<SortKey>("completionRate");
   const [desc, setDesc] = useState(false);
@@ -328,9 +334,23 @@ export function ManagerPerformance({ data }: { data: TrainingRecord[] }) {
                         ? `⚠️ ${80 - r.completionRate}pp below the 80% target. Coach team this week.`
                         : `🚨 Critical — ${60 - r.completionRate}pp below the 60% floor. Escalate.`}
                     </span>
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
-                      Send nudge
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs">
+                        Send nudge
+                      </Button>
+                      {onDrill && (
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDrill(r.manager);
+                          }}
+                        >
+                          Drill in →
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

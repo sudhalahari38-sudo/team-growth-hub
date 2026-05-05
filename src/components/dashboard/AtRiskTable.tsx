@@ -50,11 +50,20 @@ function riskOf(days: number): { label: string; tone: "critical" | "high" | "mod
   return { label: "Moderate", tone: "moderate", pct: 40 };
 }
 
-export function AtRiskTable({ data }: { data: TrainingRecord[] }) {
-  const all = atRiskEmployees(data);
+export function AtRiskTable({
+  data,
+  defaultBucket = "all",
+  managerFilter,
+}: {
+  data: TrainingRecord[];
+  defaultBucket?: RiskBucket;
+  managerFilter?: string;
+}) {
+  const sourceAll = atRiskEmployees(data);
+  const all = managerFilter ? sourceAll.filter((r) => r.managerName === managerFilter) : sourceAll;
   const [limit, setLimit] = useState(PAGE);
   const [query, setQuery] = useState("");
-  const [bucket, setBucket] = useState<RiskBucket>("all");
+  const [bucket, setBucket] = useState<RiskBucket>(defaultBucket);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
