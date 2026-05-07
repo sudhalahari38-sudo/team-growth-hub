@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import {
   GraduationCap,
@@ -7,10 +7,20 @@ import {
   TrendingUp,
   AlertTriangle,
   ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { generateMockTrainingData } from "@/lib/mock-training-data";
+import { generateMockFeedback } from "@/lib/mock-feedback-data";
 import { applyFilters, computeKpis, uniqueOptions } from "@/lib/training-analytics";
 import { EMPTY_FILTERS, type Filters, type TrainingRecord } from "@/lib/training-types";
+import type { FeedbackRecord } from "@/lib/feedback-types";
+import {
+  applyRls,
+  buildIdentities,
+  LEADERSHIP_IDENTITY,
+  type Identity,
+} from "@/lib/current-user";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
@@ -20,6 +30,10 @@ import { RecommendedActions } from "@/components/dashboard/RecommendedActions";
 import { ManagerDrillDown } from "@/components/dashboard/ManagerDrillDown";
 import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
+import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
+import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
+import { syncPercipio } from "@/server/percipio.functions";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -36,28 +50,91 @@ export const Route = createFileRoute("/")({
 });
 
 const MOCK = generateMockTrainingData();
+const MOCK_FEEDBACK = generateMockFeedback(MOCK);
+// Auto-sync interval (15 min)
+const AUTO_SYNC_MS = 15 * 60 * 1000;
 
 function Dashboard() {
   const [data, setData] = useState<TrainingRecord[]>(MOCK);
   const [isUsingMock, setIsUsingMock] = useState(true);
+  const [feedback, setFeedback] = useState<FeedbackRecord[]>(MOCK_FEEDBACK);
+  const [feedbackIsMock, setFeedbackIsMock] = useState(true);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [view, setView] = useState<DashboardView>("overview");
   const [drillManager, setDrillManager] = useState<string | null>(null);
   const [atRiskDefault, setAtRiskDefault] = useState<"all" | "critical">("all");
+  const [identity, setIdentity] = useState<Identity>(LEADERSHIP_IDENTITY);
+  const [lastSync, setLastSync] = useState<Date>(new Date());
+  const [syncing, setSyncing] = useState(false);
+  const [autoSync, setAutoSync] = useState(true);
+  const syncedOnceRef = useRef(false);
 
-  const filtered = useMemo(() => applyFilters(data, filters), [data, filters]);
+  // Identities derived from full dataset
+  const identities = useMemo(() => buildIdentities(data), [data]);
+
+  // RLS gate: managers see only their own team
+  const visibleData = useMemo(() => applyRls(data, identity), [data, identity]);
+  const visibleFeedback = useMemo(
+    () => (identity.role === "leadership"
+      ? feedback
+      : feedback.filter((f) => f.managerName === identity.managerName)),
+    [feedback, identity],
+  );
+
+  const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
   const kpis = useMemo(() => computeKpis(filtered), [filtered]);
 
   const options = useMemo(
     () => ({
-      managers: uniqueOptions(data, "managerName"),
-      departments: uniqueOptions(data, "department"),
-      categories: uniqueOptions(data, "courseCategory"),
-      trainingTypes: uniqueOptions(data, "trainingType"),
-      statuses: uniqueOptions(data, "status"),
+      managers: uniqueOptions(visibleData, "managerName"),
+      departments: uniqueOptions(visibleData, "department"),
+      categories: uniqueOptions(visibleData, "courseCategory"),
+      trainingTypes: uniqueOptions(visibleData, "trainingType"),
+      statuses: uniqueOptions(visibleData, "status"),
     }),
-    [data],
+    [visibleData],
   );
+
+  // Manager identities also constrain the manager filter
+  const managerLockedToSelf = identity.role === "manager";
+  useEffect(() => {
+    if (managerLockedToSelf && filters.manager !== "all" && filters.manager !== identity.managerName) {
+      setFilters({ ...filters, manager: "all" });
+    }
+  }, [identity, managerLockedToSelf]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const runSync = async (silent = false) => {
+    setSyncing(true);
+    try {
+      const res = await syncPercipio();
+      if (res.error) {
+        if (!silent) toast.error(`Percipio sync failed: ${res.error}`);
+      } else if (res.records.length) {
+        setData(res.records);
+        setIsUsingMock(false);
+        setLastSync(new Date());
+        if (!silent) toast.success(`Synced ${res.records.length} records from Percipio`);
+      } else if (!silent) {
+        toast.info("Percipio returned no records");
+      }
+    } catch (e) {
+      if (!silent) toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Scheduled background sync
+  useEffect(() => {
+    if (!autoSync) return;
+    // initial silent sync once per mount
+    if (!syncedOnceRef.current) {
+      syncedOnceRef.current = true;
+      runSync(true);
+    }
+    const id = window.setInterval(() => runSync(true), AUTO_SYNC_MS);
+    return () => window.clearInterval(id);
+  }, [autoSync]);
 
   const goToCritical = () => {
     setAtRiskDefault("critical");
@@ -90,25 +167,33 @@ function Dashboard() {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-xs">
-            <div className="flex flex-col items-end">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setAutoSync((v) => !v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
+                autoSync ? "text-success" : "text-primary-foreground/60",
+              )}
+              title="Toggle scheduled background sync (every 15 min)"
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
+              Auto-sync {autoSync ? "On" : "Off"}
+            </button>
+            <div className="flex flex-col items-end text-xs">
               <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
                 Last sync
               </span>
               <span className="font-medium tabular-nums">
-                {new Date().toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
               </span>
             </div>
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
-                Reporting period
-              </span>
-              <span className="font-medium">Trailing 12 months · {data.length} records</span>
-            </div>
+            <IdentitySwitcher
+              identity={identity}
+              identities={identities}
+              onChange={setIdentity}
+            />
           </div>
         </div>
         {/* Tabs */}
@@ -120,23 +205,27 @@ function Dashboard() {
       </header>
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
-        <ControlPanel
-          filters={filters}
-          setFilters={setFilters}
-          options={options}
-          isUsingMock={isUsingMock}
-          recordCount={data.length}
-          onLoad={(records) => {
-            setData(records);
-            setIsUsingMock(false);
-            setFilters(EMPTY_FILTERS);
-          }}
-          onReset={() => {
-            setData(MOCK);
-            setIsUsingMock(true);
-            setFilters(EMPTY_FILTERS);
-          }}
-        />
+        {view !== "feedback" && (
+          <ControlPanel
+            filters={filters}
+            setFilters={setFilters}
+            options={options}
+            isUsingMock={isUsingMock}
+            recordCount={visibleData.length}
+            onLoad={(records) => {
+              setData(records);
+              setIsUsingMock(false);
+              setFilters(EMPTY_FILTERS);
+            }}
+            onReset={() => {
+              setData(MOCK);
+              setIsUsingMock(true);
+              setFilters(EMPTY_FILTERS);
+            }}
+            onSync={() => runSync(false)}
+            syncing={syncing}
+          />
+        )}
 
         {view === "overview" && (
           <>
@@ -232,7 +321,27 @@ function Dashboard() {
 
         {view === "forecast" && <ForecastTab data={filtered} />}
 
+        {view === "feedback" && (
+          <FeedbackTab
+            data={visibleFeedback}
+            isUsingMock={feedbackIsMock}
+            onLoad={(rs) => {
+              setFeedback(rs);
+              setFeedbackIsMock(false);
+            }}
+            onReset={() => {
+              setFeedback(MOCK_FEEDBACK);
+              setFeedbackIsMock(true);
+            }}
+          />
+        )}
+
         <footer className="text-center text-xs text-muted-foreground py-6 border-t">
+          {identity.role === "manager" && (
+            <div className="mb-2 text-[11px] text-muted-foreground/80">
+              Row-level security active · viewing {identity.managerName}'s team only
+            </div>
+          )}
           Built for L&D managers • Traffic light:{" "}
           <span className="text-danger font-medium">red &lt; 60%</span> ·{" "}
           <span className="text-warning font-medium">yellow 60–80%</span> ·{" "}
