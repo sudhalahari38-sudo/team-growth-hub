@@ -200,6 +200,19 @@ export function ControlPanel({
             <Upload className="h-4 w-4 mr-1.5" />
             Upload Percipio CSV
           </Button>
+          {onSync && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSync}
+              disabled={syncing}
+              className="h-9"
+              title="Sync the latest learning-activity report from Percipio"
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-1.5", syncing && "animate-spin")} />
+              {syncing ? "Syncing…" : "Sync Percipio API"}
+            </Button>
+          )}
           {!isUsingMock && (
             <Button variant="outline" size="sm" onClick={onReset} className="h-9">
               <RotateCcw className="h-4 w-4 mr-1.5" />
