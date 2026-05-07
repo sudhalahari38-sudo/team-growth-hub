@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
   Database,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { parseTrainingCsv, SAMPLE_CSV } from "@/lib/csv-parser";
 import type { TrainingRecord } from "@/lib/training-types";
@@ -41,6 +42,8 @@ interface ControlPanelProps {
   recordCount: number;
   onLoad: (records: TrainingRecord[]) => void;
   onReset: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }
 
 function FilterField({
@@ -100,6 +103,8 @@ export function ControlPanel({
   recordCount,
   onLoad,
   onReset,
+  onSync,
+  syncing,
 }: ControlPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isFiltered = Object.values(filters).some((v) => v !== "all");
