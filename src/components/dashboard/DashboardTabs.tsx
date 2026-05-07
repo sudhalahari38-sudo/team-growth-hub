@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, AlertTriangle, BookOpen, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, AlertTriangle, BookOpen, Sparkles, MessageSquareHeart } from "lucide-react";
 import type { ReactNode } from "react";
 
-export type DashboardView = "overview" | "managers" | "at-risk" | "courses" | "forecast";
+export type DashboardView = "overview" | "managers" | "at-risk" | "courses" | "forecast" | "feedback";
 
 const TABS: { id: DashboardView; label: string; icon: ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -10,6 +10,7 @@ const TABS: { id: DashboardView; label: string; icon: ReactNode }[] = [
   { id: "at-risk", label: "At-Risk Employees", icon: <AlertTriangle className="h-4 w-4" /> },
   { id: "courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   { id: "forecast", label: "Forecast", icon: <Sparkles className="h-4 w-4" /> },
+  { id: "feedback", label: "Training Feedback", icon: <MessageSquareHeart className="h-4 w-4" /> },
 ];
 
 export function DashboardTabs({

@@ -82,6 +82,24 @@ export function monthlyCompletionTrend(data: TrainingRecord[]) {
   }));
 }
 
+export function quarterlyCompletionTrend(data: TrainingRecord[]) {
+  const map = new Map<string, number>();
+  for (const r of data) {
+    if (!r.completionDate) continue;
+    const d = new Date(r.completionDate);
+    const q = Math.floor(d.getUTCMonth() / 3) + 1;
+    const key = `${d.getUTCFullYear()}-Q${q}`;
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  const sorted = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  // last 8 quarters (~2yrs)
+  return sorted.slice(-8).map(([key, completions]) => ({
+    month: key,
+    label: key.slice(2), // yy-Qn
+    completions,
+  }));
+}
+
 export interface ManagerRow {
   manager: string;
   teamSize: number;

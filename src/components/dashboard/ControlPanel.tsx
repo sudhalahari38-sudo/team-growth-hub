@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
   Database,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { parseTrainingCsv, SAMPLE_CSV } from "@/lib/csv-parser";
 import type { TrainingRecord } from "@/lib/training-types";
@@ -41,6 +42,8 @@ interface ControlPanelProps {
   recordCount: number;
   onLoad: (records: TrainingRecord[]) => void;
   onReset: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }
 
 function FilterField({
@@ -100,6 +103,8 @@ export function ControlPanel({
   recordCount,
   onLoad,
   onReset,
+  onSync,
+  syncing,
 }: ControlPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isFiltered = Object.values(filters).some((v) => v !== "all");
@@ -195,6 +200,19 @@ export function ControlPanel({
             <Upload className="h-4 w-4 mr-1.5" />
             Upload Percipio CSV
           </Button>
+          {onSync && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSync}
+              disabled={syncing}
+              className="h-9"
+              title="Sync the latest learning-activity report from Percipio"
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-1.5", syncing && "animate-spin")} />
+              {syncing ? "Syncing…" : "Sync Percipio API"}
+            </Button>
+          )}
           {!isUsingMock && (
             <Button variant="outline" size="sm" onClick={onReset} className="h-9">
               <RotateCcw className="h-4 w-4 mr-1.5" />
