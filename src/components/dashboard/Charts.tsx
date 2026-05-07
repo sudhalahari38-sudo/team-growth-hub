@@ -3,14 +3,17 @@ import type { TrainingRecord } from "@/lib/training-types";
 import {
   completionByCategory,
   monthlyCompletionTrend,
+  quarterlyCompletionTrend,
   trafficLight,
   lightClasses,
 } from "@/lib/training-analytics";
 import { BarChart3, LineChart as LineIcon, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const TARGET = 80;
 const MONTHLY_TARGET = 25;
+const QUARTERLY_TARGET = MONTHLY_TARGET * 3;
 
 export function CategoryChart({ data }: { data: TrainingRecord[] }) {
   const rows = completionByCategory(data);
