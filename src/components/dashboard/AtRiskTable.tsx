@@ -370,6 +370,20 @@ export function AtRiskTable({
                         : "💬 Send a friendly nudge to keep on track."}
                     </p>
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.success(`Nudge sent to ${r.employeeName}`, {
+                            description: `Reminder for "${r.courseName}" delivered.`,
+                          });
+                        }}
+                      >
+                        <Bell className="h-3 w-3 mr-1" />
+                        Nudge
+                      </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Mail className="h-3 w-3 mr-1" />
                         Email reminder
