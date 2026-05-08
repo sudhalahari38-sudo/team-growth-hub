@@ -121,6 +121,19 @@ export function AtRiskTable({
               </p>
             </div>
           </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              if (!filtered.length) return toast.info("No learners to nudge");
+              toast.success(`Nudge sent to ${filtered.length} learner${filtered.length === 1 ? "" : "s"}`, {
+                description: "Reminder delivered to all pending learners in the current view.",
+              });
+            }}
+            className="h-9 text-xs shadow-sm"
+          >
+            <Bell className="h-3.5 w-3.5 mr-1.5" />
+            Nudge all ({filtered.length})
+          </Button>
         </div>
 
         {/* Risk bucket pills */}
