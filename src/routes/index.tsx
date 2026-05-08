@@ -3,10 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import {
   GraduationCap,
-  CheckCircle2,
-  TrendingUp,
-  AlertTriangle,
-  ShieldCheck,
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
