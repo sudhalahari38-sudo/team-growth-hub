@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { atRiskEmployees } from "@/lib/training-analytics";
+import { sendNudge } from "@/lib/nudge.functions";
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   AlertTriangle,
@@ -67,6 +69,9 @@ export function AtRiskTable({
   const [query, setQuery] = useState("");
   const [bucket, setBucket] = useState<RiskBucket>(defaultBucket);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [nudgingAll, setNudgingAll] = useState(false);
+  const [nudgingId, setNudgingId] = useState<string | null>(null);
+  const nudgeFn = useServerFn(sendNudge);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -123,16 +128,45 @@ export function AtRiskTable({
           </div>
           <Button
             size="sm"
-            onClick={() => {
+            disabled={nudgingAll || !filtered.length}
+            onClick={async () => {
               if (!filtered.length) return toast.info("No learners to nudge");
-              toast.success(`Nudge sent to ${filtered.length} learner${filtered.length === 1 ? "" : "s"}`, {
-                description: "Reminder delivered to all pending learners in the current view.",
-              });
+              setNudgingAll(true);
+              try {
+                const res = await nudgeFn({
+                  data: {
+                    channel: "email",
+                    source: "at-risk:bulk",
+                    recipients: filtered.map((r) => ({
+                      employeeId: r.employeeId,
+                      employeeName: r.employeeName,
+                      managerName: r.managerName,
+                      courseName: r.courseName,
+                      daysOverdue: r.daysOverdue,
+                    })),
+                  },
+                });
+                if (res.success) {
+                  toast.success(`Nudge sent to ${res.sent} learner${res.sent === 1 ? "" : "s"}`, {
+                    description: `Reminder ${res.reminderId} delivered via ${res.channel}.`,
+                  });
+                } else {
+                  toast.warning(`Sent ${res.sent}, ${res.failed} failed`, {
+                    description: `Reminder ${res.reminderId}.`,
+                  });
+                }
+              } catch (e) {
+                toast.error("Failed to send nudges", {
+                  description: e instanceof Error ? e.message : "Unknown error",
+                });
+              } finally {
+                setNudgingAll(false);
+              }
             }}
             className="h-9 text-xs shadow-sm"
           >
             <Bell className="h-3.5 w-3.5 mr-1.5" />
-            Nudge all ({filtered.length})
+            {nudgingAll ? "Sending…" : `Nudge all (${filtered.length})`}
           </Button>
         </div>
 
@@ -387,15 +421,46 @@ export function AtRiskTable({
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
-                        onClick={(e) => {
+                        disabled={nudgingId === r.employeeId}
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          toast.success(`Nudge sent to ${r.employeeName}`, {
-                            description: `Reminder for "${r.courseName}" delivered.`,
-                          });
+                          setNudgingId(r.employeeId);
+                          try {
+                            const res = await nudgeFn({
+                              data: {
+                                channel: "email",
+                                source: "at-risk:single",
+                                recipients: [
+                                  {
+                                    employeeId: r.employeeId,
+                                    employeeName: r.employeeName,
+                                    managerName: r.managerName,
+                                    courseName: r.courseName,
+                                    daysOverdue: r.daysOverdue,
+                                  },
+                                ],
+                              },
+                            });
+                            if (res.success) {
+                              toast.success(`Nudge sent to ${r.employeeName}`, {
+                                description: `Reminder ${res.reminderId} for "${r.courseName}" delivered.`,
+                              });
+                            } else {
+                              toast.error(`Nudge failed for ${r.employeeName}`, {
+                                description: res.errors[0]?.reason ?? "Unknown error",
+                              });
+                            }
+                          } catch (err) {
+                            toast.error("Nudge failed", {
+                              description: err instanceof Error ? err.message : "Unknown error",
+                            });
+                          } finally {
+                            setNudgingId(null);
+                          }
                         }}
                       >
                         <Bell className="h-3 w-3 mr-1" />
-                        Nudge
+                        {nudgingId === r.employeeId ? "Sending…" : "Nudge"}
                       </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Mail className="h-3 w-3 mr-1" />
