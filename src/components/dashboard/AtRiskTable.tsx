@@ -128,16 +128,45 @@ export function AtRiskTable({
           </div>
           <Button
             size="sm"
-            onClick={() => {
+            disabled={nudgingAll || !filtered.length}
+            onClick={async () => {
               if (!filtered.length) return toast.info("No learners to nudge");
-              toast.success(`Nudge sent to ${filtered.length} learner${filtered.length === 1 ? "" : "s"}`, {
-                description: "Reminder delivered to all pending learners in the current view.",
-              });
+              setNudgingAll(true);
+              try {
+                const res = await nudgeFn({
+                  data: {
+                    channel: "email",
+                    source: "at-risk:bulk",
+                    recipients: filtered.map((r) => ({
+                      employeeId: r.employeeId,
+                      employeeName: r.employeeName,
+                      managerName: r.managerName,
+                      courseName: r.courseName,
+                      daysOverdue: r.daysOverdue,
+                    })),
+                  },
+                });
+                if (res.success) {
+                  toast.success(`Nudge sent to ${res.sent} learner${res.sent === 1 ? "" : "s"}`, {
+                    description: `Reminder ${res.reminderId} delivered via ${res.channel}.`,
+                  });
+                } else {
+                  toast.warning(`Sent ${res.sent}, ${res.failed} failed`, {
+                    description: `Reminder ${res.reminderId}.`,
+                  });
+                }
+              } catch (e) {
+                toast.error("Failed to send nudges", {
+                  description: e instanceof Error ? e.message : "Unknown error",
+                });
+              } finally {
+                setNudgingAll(false);
+              }
             }}
             className="h-9 text-xs shadow-sm"
           >
             <Bell className="h-3.5 w-3.5 mr-1.5" />
-            Nudge all ({filtered.length})
+            {nudgingAll ? "Sending…" : `Nudge all (${filtered.length})`}
           </Button>
         </div>
 
