@@ -124,7 +124,7 @@ export function ControlPanel({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "percipio-sample.csv";
+    a.download = "lms-sample.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -198,7 +198,7 @@ export function ControlPanel({
             className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-glow-primary transition-shadow"
           >
             <Upload className="h-4 w-4 mr-1.5" />
-            Upload Percipio CSV
+            Upload LMS CSV
           </Button>
           {onSync && (
             <Button
@@ -207,10 +207,10 @@ export function ControlPanel({
               onClick={onSync}
               disabled={syncing}
               className="h-9"
-              title="Sync the latest learning-activity report from Percipio"
+              title="Sync the latest learning-activity report from LMS"
             >
               <RefreshCw className={cn("h-4 w-4 mr-1.5", syncing && "animate-spin")} />
-              {syncing ? "Syncing…" : "Sync Percipio API"}
+              {syncing ? "Syncing…" : "Sync LMS API"}
             </Button>
           )}
           {!isUsingMock && (

@@ -14,7 +14,9 @@ import {
   ShieldAlert,
   ChevronRight,
   Filter,
+  Bell,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const PAGE = 8;
@@ -119,6 +121,19 @@ export function AtRiskTable({
               </p>
             </div>
           </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              if (!filtered.length) return toast.info("No learners to nudge");
+              toast.success(`Nudge sent to ${filtered.length} learner${filtered.length === 1 ? "" : "s"}`, {
+                description: "Reminder delivered to all pending learners in the current view.",
+              });
+            }}
+            className="h-9 text-xs shadow-sm"
+          >
+            <Bell className="h-3.5 w-3.5 mr-1.5" />
+            Nudge all ({filtered.length})
+          </Button>
         </div>
 
         {/* Risk bucket pills */}
@@ -368,6 +383,20 @@ export function AtRiskTable({
                         : "💬 Send a friendly nudge to keep on track."}
                     </p>
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.success(`Nudge sent to ${r.employeeName}`, {
+                            description: `Reminder for "${r.courseName}" delivered.`,
+                          });
+                        }}
+                      >
+                        <Bell className="h-3 w-3 mr-1" />
+                        Nudge
+                      </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Mail className="h-3 w-3 mr-1" />
                         Email reminder

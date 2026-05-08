@@ -3,10 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import {
   GraduationCap,
-  CheckCircle2,
-  TrendingUp,
-  AlertTriangle,
-  ShieldCheck,
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,9 +17,10 @@ import {
   LEADERSHIP_IDENTITY,
   type Identity,
 } from "@/lib/current-user";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+// KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
-import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
+import { CategoryChart } from "@/components/dashboard/Charts";
+import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
 import { DashboardTabs, type DashboardView } from "@/components/dashboard/DashboardTabs";
 import { RecommendedActions } from "@/components/dashboard/RecommendedActions";
@@ -43,7 +40,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Manager-facing Learning & Development dashboard tracking completion rates, overdue trainings, manager performance and at-risk employees from Skillsoft Percipio data.",
+          "Manager-facing Learning & Development dashboard tracking completion rates, overdue trainings, manager performance and at-risk employees from Skillsoft LMS data.",
       },
     ],
   }),
@@ -108,14 +105,14 @@ function Dashboard() {
     try {
       const res = await syncPercipio();
       if (res.error) {
-        if (!silent) toast.error(`Percipio sync failed: ${res.error}`);
+        if (!silent) toast.error(`LMS sync failed: ${res.error}`);
       } else if (res.records.length) {
         setData(res.records);
         setIsUsingMock(false);
         setLastSync(new Date());
-        if (!silent) toast.success(`Synced ${res.records.length} records from Percipio`);
+        if (!silent) toast.success(`Synced ${res.records.length} records from LMS`);
       } else if (!silent) {
-        toast.info("Percipio returned no records");
+        toast.info("LMS returned no records");
       }
     } catch (e) {
       if (!silent) toast.error(e instanceof Error ? e.message : "Sync failed");
@@ -160,7 +157,7 @@ function Dashboard() {
             </div>
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/60 mb-1">
-                Skillsoft Percipio · Manager Console
+                Skillsoft LMS · Manager Console
               </div>
               <h1 className="text-xl font-semibold tracking-tight leading-tight">
                 Learning &amp; Development Dashboard
@@ -229,79 +226,16 @@ function Dashboard() {
 
         {view === "overview" && (
           <>
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <KpiCard
-                label="Total Assigned"
-                value={kpis.totalAssigned.toLocaleString()}
-                sublabel="trainings"
-                formula="COUNT(records)"
-                tone="primary"
-                icon={<GraduationCap />}
-                tooltip="Total training records in the current reporting period (trailing 12 months)."
-              />
-              <KpiCard
-                label="Completed"
-                value={kpis.completed.toLocaleString()}
-                sublabel={`of ${kpis.totalAssigned.toLocaleString()}`}
-                formula="COUNT(status = 'Completed')"
-                tone="success"
-                icon={<CheckCircle2 />}
-                tooltip="Count of records where status = Completed."
-              />
-              <KpiCard
-                label="Completion Rate"
-                value={`${kpis.completionRate.toFixed(1)}%`}
-                formula="Completed ÷ Total Assigned"
-                rate={kpis.completionRate}
-                target={80}
-                tone="info"
-                icon={<TrendingUp />}
-                tooltip="Org target is 80%. Traffic light: <60% red, 60–80% amber, ≥80% green."
-                warning={
-                  kpis.completionRate < 80
-                    ? `${(80 - kpis.completionRate).toFixed(1)} pts below target`
-                    : undefined
-                }
-              />
-              <KpiCard
-                label="Overdue"
-                value={kpis.overdueCount.toLocaleString()}
-                sublabel="needs action"
-                formula="Due Date < Today AND ≠ Completed"
-                invertLight
-                rawCount={kpis.overdueCount}
-                invertThresholds={{ red: 50, yellow: 10 }}
-                tone="danger"
-                icon={<AlertTriangle />}
-                tooltip="Records past due date and not yet completed."
-              />
-              <KpiCard
-                label="Mandatory Compliance"
-                value={`${kpis.mandatoryComplianceRate.toFixed(1)}%`}
-                formula="Mandatory Completed ÷ Mandatory Assigned"
-                rate={kpis.mandatoryComplianceRate}
-                target={80}
-                tone="warning"
-                icon={<ShieldCheck />}
-                tooltip="Legal/compliance risk if below 80%."
-                warning={
-                  kpis.mandatoryComplianceRate < 80
-                    ? `${(80 - kpis.mandatoryComplianceRate).toFixed(1)} pts below target`
-                    : undefined
-                }
-              />
-            </section>
+            <ExecutiveSummary data={filtered} />
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <CategoryChart data={filtered} />
-              <TrendChart data={filtered} />
+              <RecommendedActions
+                data={filtered}
+                onViewCritical={goToCritical}
+                onDrillBottomManager={goToManager}
+              />
             </section>
-
-            <RecommendedActions
-              data={filtered}
-              onViewCritical={goToCritical}
-              onDrillBottomManager={goToManager}
-            />
           </>
         )}
 
