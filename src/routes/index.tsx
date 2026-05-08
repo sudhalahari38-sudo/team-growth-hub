@@ -23,7 +23,8 @@ import {
 } from "@/lib/current-user";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
-import { CategoryChart, TrendChart } from "@/components/dashboard/Charts";
+import { CategoryChart } from "@/components/dashboard/Charts";
+import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
 import { DashboardTabs, type DashboardView } from "@/components/dashboard/DashboardTabs";
 import { RecommendedActions } from "@/components/dashboard/RecommendedActions";
