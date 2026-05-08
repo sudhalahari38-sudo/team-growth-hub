@@ -2,14 +2,12 @@ import { Card } from "@/components/ui/card";
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   completionByCategory,
-  monthlyCompletionTrend,
-  quarterlyCompletionTrend,
   trafficLight,
   lightClasses,
 } from "@/lib/training-analytics";
-import { BarChart3, LineChart as LineIcon, AlertTriangle } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { WaveformTrend } from "./WaveformTrend";
 
 const TARGET = 80;
 const MONTHLY_TARGET = 25;
