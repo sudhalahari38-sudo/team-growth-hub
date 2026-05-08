@@ -69,6 +69,9 @@ export function AtRiskTable({
   const [query, setQuery] = useState("");
   const [bucket, setBucket] = useState<RiskBucket>(defaultBucket);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [nudgingAll, setNudgingAll] = useState(false);
+  const [nudgingId, setNudgingId] = useState<string | null>(null);
+  const nudgeFn = useServerFn(sendNudge);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
