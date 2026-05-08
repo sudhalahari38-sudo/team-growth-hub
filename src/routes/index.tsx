@@ -230,79 +230,16 @@ function Dashboard() {
 
         {view === "overview" && (
           <>
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <KpiCard
-                label="Total Assigned"
-                value={kpis.totalAssigned.toLocaleString()}
-                sublabel="trainings"
-                formula="COUNT(records)"
-                tone="primary"
-                icon={<GraduationCap />}
-                tooltip="Total training records in the current reporting period (trailing 12 months)."
-              />
-              <KpiCard
-                label="Completed"
-                value={kpis.completed.toLocaleString()}
-                sublabel={`of ${kpis.totalAssigned.toLocaleString()}`}
-                formula="COUNT(status = 'Completed')"
-                tone="success"
-                icon={<CheckCircle2 />}
-                tooltip="Count of records where status = Completed."
-              />
-              <KpiCard
-                label="Completion Rate"
-                value={`${kpis.completionRate.toFixed(1)}%`}
-                formula="Completed ÷ Total Assigned"
-                rate={kpis.completionRate}
-                target={80}
-                tone="info"
-                icon={<TrendingUp />}
-                tooltip="Org target is 80%. Traffic light: <60% red, 60–80% amber, ≥80% green."
-                warning={
-                  kpis.completionRate < 80
-                    ? `${(80 - kpis.completionRate).toFixed(1)} pts below target`
-                    : undefined
-                }
-              />
-              <KpiCard
-                label="Overdue"
-                value={kpis.overdueCount.toLocaleString()}
-                sublabel="needs action"
-                formula="Due Date < Today AND ≠ Completed"
-                invertLight
-                rawCount={kpis.overdueCount}
-                invertThresholds={{ red: 50, yellow: 10 }}
-                tone="danger"
-                icon={<AlertTriangle />}
-                tooltip="Records past due date and not yet completed."
-              />
-              <KpiCard
-                label="Mandatory Compliance"
-                value={`${kpis.mandatoryComplianceRate.toFixed(1)}%`}
-                formula="Mandatory Completed ÷ Mandatory Assigned"
-                rate={kpis.mandatoryComplianceRate}
-                target={80}
-                tone="warning"
-                icon={<ShieldCheck />}
-                tooltip="Legal/compliance risk if below 80%."
-                warning={
-                  kpis.mandatoryComplianceRate < 80
-                    ? `${(80 - kpis.mandatoryComplianceRate).toFixed(1)} pts below target`
-                    : undefined
-                }
-              />
-            </section>
+            <ExecutiveSummary data={filtered} />
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <CategoryChart data={filtered} />
-              <TrendChart data={filtered} />
+              <RecommendedActions
+                data={filtered}
+                onViewCritical={goToCritical}
+                onDrillBottomManager={goToManager}
+              />
             </section>
-
-            <RecommendedActions
-              data={filtered}
-              onViewCritical={goToCritical}
-              onDrillBottomManager={goToManager}
-            />
           </>
         )}
 
