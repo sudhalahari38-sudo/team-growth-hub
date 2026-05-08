@@ -421,15 +421,46 @@ export function AtRiskTable({
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
-                        onClick={(e) => {
+                        disabled={nudgingId === r.employeeId}
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          toast.success(`Nudge sent to ${r.employeeName}`, {
-                            description: `Reminder for "${r.courseName}" delivered.`,
-                          });
+                          setNudgingId(r.employeeId);
+                          try {
+                            const res = await nudgeFn({
+                              data: {
+                                channel: "email",
+                                source: "at-risk:single",
+                                recipients: [
+                                  {
+                                    employeeId: r.employeeId,
+                                    employeeName: r.employeeName,
+                                    managerName: r.managerName,
+                                    courseName: r.courseName,
+                                    daysOverdue: r.daysOverdue,
+                                  },
+                                ],
+                              },
+                            });
+                            if (res.success) {
+                              toast.success(`Nudge sent to ${r.employeeName}`, {
+                                description: `Reminder ${res.reminderId} for "${r.courseName}" delivered.`,
+                              });
+                            } else {
+                              toast.error(`Nudge failed for ${r.employeeName}`, {
+                                description: res.errors[0]?.reason ?? "Unknown error",
+                              });
+                            }
+                          } catch (err) {
+                            toast.error("Nudge failed", {
+                              description: err instanceof Error ? err.message : "Unknown error",
+                            });
+                          } finally {
+                            setNudgingId(null);
+                          }
                         }}
                       >
                         <Bell className="h-3 w-3 mr-1" />
-                        Nudge
+                        {nudgingId === r.employeeId ? "Sending…" : "Nudge"}
                       </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Mail className="h-3 w-3 mr-1" />
