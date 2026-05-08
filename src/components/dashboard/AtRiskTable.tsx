@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { atRiskEmployees } from "@/lib/training-analytics";
+import { sendNudge } from "@/lib/nudge.functions";
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   AlertTriangle,
