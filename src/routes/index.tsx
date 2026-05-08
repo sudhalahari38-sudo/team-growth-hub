@@ -17,7 +17,7 @@ import {
   LEADERSHIP_IDENTITY,
   type Identity,
 } from "@/lib/current-user";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+// KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart } from "@/components/dashboard/Charts";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Manager-facing Learning & Development dashboard tracking completion rates, overdue trainings, manager performance and at-risk employees from Skillsoft Percipio data.",
+          "Manager-facing Learning & Development dashboard tracking completion rates, overdue trainings, manager performance and at-risk employees from Skillsoft LMS data.",
       },
     ],
   }),
@@ -105,14 +105,14 @@ function Dashboard() {
     try {
       const res = await syncPercipio();
       if (res.error) {
-        if (!silent) toast.error(`Percipio sync failed: ${res.error}`);
+        if (!silent) toast.error(`LMS sync failed: ${res.error}`);
       } else if (res.records.length) {
         setData(res.records);
         setIsUsingMock(false);
         setLastSync(new Date());
-        if (!silent) toast.success(`Synced ${res.records.length} records from Percipio`);
+        if (!silent) toast.success(`Synced ${res.records.length} records from LMS`);
       } else if (!silent) {
-        toast.info("Percipio returned no records");
+        toast.info("LMS returned no records");
       }
     } catch (e) {
       if (!silent) toast.error(e instanceof Error ? e.message : "Sync failed");
@@ -157,7 +157,7 @@ function Dashboard() {
             </div>
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/60 mb-1">
-                Skillsoft Percipio · Manager Console
+                Skillsoft LMS · Manager Console
               </div>
               <h1 className="text-xl font-semibold tracking-tight leading-tight">
                 Learning &amp; Development Dashboard
