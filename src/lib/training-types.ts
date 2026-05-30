@@ -22,6 +22,7 @@ export interface Filters {
   category: string;
   trainingType: string;
   status: string;
+  courseName: string;
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -30,4 +31,5 @@ export const EMPTY_FILTERS: Filters = {
   category: "all",
   trainingType: "all",
   status: "all",
+  courseName: "all",
 };
