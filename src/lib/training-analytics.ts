@@ -21,7 +21,8 @@ export function applyFilters(data: TrainingRecord[], f: Filters): TrainingRecord
       (f.department === "all" || r.department === f.department) &&
       (f.category === "all" || r.courseCategory === f.category) &&
       (f.trainingType === "all" || r.trainingType === f.trainingType) &&
-      (f.status === "all" || r.status === f.status),
+      (f.status === "all" || r.status === f.status) &&
+      (f.courseName === "all" || r.courseName === f.courseName),
   );
 }
 
