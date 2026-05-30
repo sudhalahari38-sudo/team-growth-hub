@@ -101,6 +101,89 @@ export function quarterlyCompletionTrend(data: TrainingRecord[]) {
   }));
 }
 
+/* ----------------------- Executive metric trend series ----------------------- */
+
+export interface MetricPoint {
+  label: string;
+  value: number;
+}
+export interface ExecutiveMetricTrends {
+  assigned: MetricPoint[];
+  completed: MetricPoint[];
+  completionRate: MetricPoint[];
+  overdue: MetricPoint[];
+  mandatoryCompliance: MetricPoint[];
+}
+
+export function executiveMetricTrends(
+  data: TrainingRecord[],
+  today = TODAY,
+): ExecutiveMetricTrends {
+  // Build last 12 month buckets ending at `today`
+  const months: { key: string; label: string; end: Date }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i + 1, 0));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    months.push({
+      key,
+      label: new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toLocaleDateString(
+        "en-US",
+        { month: "short" },
+      ),
+      end: d,
+    });
+  }
+
+  const assigned: MetricPoint[] = [];
+  const completed: MetricPoint[] = [];
+  const completionRate: MetricPoint[] = [];
+  const overdue: MetricPoint[] = [];
+  const mandatoryCompliance: MetricPoint[] = [];
+
+  for (const m of months) {
+    const monthStart = new Date(Date.UTC(m.end.getUTCFullYear(), m.end.getUTCMonth(), 1));
+    const assignedInMonth = data.filter((r) => {
+      const ad = new Date(r.assignedDate);
+      return ad >= monthStart && ad <= m.end;
+    }).length;
+    const completedInMonth = data.filter((r) => {
+      if (!r.completionDate) return false;
+      const cd = new Date(r.completionDate);
+      return cd >= monthStart && cd <= m.end;
+    }).length;
+    const cumAssigned = data.filter((r) => new Date(r.assignedDate) <= m.end).length;
+    const cumCompleted = data.filter(
+      (r) => r.completionDate && new Date(r.completionDate) <= m.end,
+    ).length;
+    const overdueAsOf = data.filter((r) => {
+      const due = new Date(r.dueDate);
+      if (due > m.end) return false;
+      if (!r.completionDate) return true;
+      return new Date(r.completionDate) > due;
+    }).length;
+    const mand = data.filter(
+      (r) => r.trainingType === "Mandatory" && new Date(r.assignedDate) <= m.end,
+    );
+    const mandDone = mand.filter(
+      (r) => r.completionDate && new Date(r.completionDate) <= m.end,
+    ).length;
+
+    assigned.push({ label: m.label, value: assignedInMonth });
+    completed.push({ label: m.label, value: completedInMonth });
+    completionRate.push({
+      label: m.label,
+      value: cumAssigned ? (cumCompleted / cumAssigned) * 100 : 0,
+    });
+    overdue.push({ label: m.label, value: overdueAsOf });
+    mandatoryCompliance.push({
+      label: m.label,
+      value: mand.length ? (mandDone / mand.length) * 100 : 0,
+    });
+  }
+
+  return { assigned, completed, completionRate, overdue, mandatoryCompliance };
+}
+
 export interface ManagerRow {
   manager: string;
   teamSize: number;
