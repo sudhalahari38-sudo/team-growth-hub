@@ -22,6 +22,7 @@ import {
   Database,
   Sparkles,
   RefreshCw,
+  BookOpen,
 } from "lucide-react";
 import { parseTrainingCsv, SAMPLE_CSV } from "@/lib/csv-parser";
 import type { TrainingRecord } from "@/lib/training-types";
