@@ -88,6 +88,7 @@ function Dashboard() {
       categories: uniqueOptions(visibleData, "courseCategory"),
       trainingTypes: uniqueOptions(visibleData, "trainingType"),
       statuses: uniqueOptions(visibleData, "status"),
+      courseNames: uniqueOptions(visibleData, "courseName"),
     }),
     [visibleData],
   );

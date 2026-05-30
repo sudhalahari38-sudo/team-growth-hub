@@ -137,6 +137,7 @@ export function ControlPanel({
     { key: "category", label: "Category" },
     { key: "trainingType", label: "Type" },
     { key: "status", label: "Status" },
+    { key: "courseName", label: "Training" },
   ];
 
   return (
@@ -233,7 +234,7 @@ export function ControlPanel({
               Filters
             </span>
           </div>
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <FilterField
               label="Manager"
               icon={UserCircle2}
@@ -268,6 +269,13 @@ export function ControlPanel({
               value={filters.status}
               onChange={(v) => setFilters({ ...filters, status: v })}
               options={options.statuses}
+            />
+            <FilterField
+              label="Training Name"
+              icon={BookOpen}
+              value={filters.courseName}
+              onChange={(v) => setFilters({ ...filters, courseName: v })}
+              options={options.courseNames}
             />
           </div>
         </div>
