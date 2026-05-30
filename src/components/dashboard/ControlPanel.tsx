@@ -38,6 +38,7 @@ interface ControlPanelProps {
     categories: string[];
     trainingTypes: string[];
     statuses: string[];
+    courseNames: string[];
   };
   isUsingMock: boolean;
   recordCount: number;
