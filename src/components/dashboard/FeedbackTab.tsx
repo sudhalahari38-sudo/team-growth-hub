@@ -32,6 +32,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Minus,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,6 +45,32 @@ import {
   type Sentiment,
 } from "@/lib/feedback-types";
 import { cn } from "@/lib/utils";
+import { useDashboardSettings } from "@/lib/dashboard-settings";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+function buildTranscript(r: FeedbackRecord): string {
+  const lines = [
+    `Training Feedback Transcript`,
+    `============================`,
+    `Date:      ${r.trainingDate}`,
+    `Course:    ${r.courseName}`,
+    `Trainer:   ${r.trainerName}`,
+    `Employee:  ${r.employeeName}`,
+    `Manager:   ${r.managerName}`,
+    `Rating:    ${r.rating} / 5`,
+    ``,
+    `Trainer: Thanks for attending "${r.courseName}". How was the session?`,
+    `${r.employeeName}: ${r.comments || "(no additional comments provided)"}`,
+    `Trainer: Appreciate the feedback — we'll factor it into the next cohort.`,
+  ];
+  return lines.join("\n");
+}
 
 const ratingColor = (avg: number) => {
   if (avg >= 4) return "var(--success)";
@@ -83,6 +110,19 @@ interface Props {
 export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(15);
+  const { settings } = useDashboardSettings();
+  const transcriptEnabled = settings.transcriptEnabled;
+  const [viewing, setViewing] = useState<FeedbackRecord | null>(null);
+
+  const downloadTranscript = (r: FeedbackRecord) => {
+    const blob = new Blob([buildTranscript(r)], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transcript-${r.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const overall = useMemo(() => avg(data.map((d) => d.rating)), [data]);
 
@@ -354,6 +394,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
                 <TableHead>Trainer</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Comment</TableHead>
+                {transcriptEnabled && <TableHead className="text-right">Transcript</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -370,11 +411,22 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
                       <StarRow value={r.rating} />
                     </TableCell>
                     <TableCell className="max-w-[320px] text-sm text-muted-foreground">{r.comments}</TableCell>
+                    {transcriptEnabled && (
+                      <TableCell className="text-right whitespace-nowrap">
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setViewing(r)}>
+                          <FileText className="h-3.5 w-3.5 mr-1" />
+                          View
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => downloadTranscript(r)}>
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               {!data.length && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                  <TableCell colSpan={transcriptEnabled ? 7 : 6} className="text-center text-sm text-muted-foreground py-8">
                     No feedback for current view
                   </TableCell>
                 </TableRow>
@@ -390,6 +442,37 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
           </div>
         )}
       </Card>
+
+      {transcriptEnabled && (
+        <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Transcript
+              </DialogTitle>
+              {viewing && (
+                <DialogDescription>
+                  {viewing.courseName} · {viewing.employeeName} · {viewing.trainingDate}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            {viewing && (
+              <>
+                <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted/50 p-4 text-xs leading-relaxed whitespace-pre-wrap font-mono">
+                  {buildTranscript(viewing)}
+                </pre>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => downloadTranscript(viewing)}>
+                    <Download className="h-4 w-4 mr-1.5" />
+                    Download .txt
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

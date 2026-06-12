@@ -29,6 +29,7 @@ import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
+import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/server/percipio.functions";
 import { cn } from "@/lib/utils";
 
@@ -187,6 +188,7 @@ function Dashboard() {
                 {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
               </span>
             </div>
+            <SettingsMenu canManage={identity.role === "leadership"} />
             <IdentitySwitcher
               identity={identity}
               identities={identities}
