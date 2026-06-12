@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fetchPercipioReport } from "./percipio.server";
+import { fetchPercipioReport } from "../server/percipio.server";
 import type { TrainingRecord } from "@/lib/training-types";
 
 export const syncPercipio = createServerFn({ method: "POST" }).handler(
