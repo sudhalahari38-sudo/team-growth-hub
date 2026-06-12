@@ -394,6 +394,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
                 <TableHead>Trainer</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Comment</TableHead>
+                {transcriptEnabled && <TableHead className="text-right">Transcript</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -410,11 +411,22 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
                       <StarRow value={r.rating} />
                     </TableCell>
                     <TableCell className="max-w-[320px] text-sm text-muted-foreground">{r.comments}</TableCell>
+                    {transcriptEnabled && (
+                      <TableCell className="text-right whitespace-nowrap">
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setViewing(r)}>
+                          <FileText className="h-3.5 w-3.5 mr-1" />
+                          View
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => downloadTranscript(r)}>
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               {!data.length && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                  <TableCell colSpan={transcriptEnabled ? 7 : 6} className="text-center text-sm text-muted-foreground py-8">
                     No feedback for current view
                   </TableCell>
                 </TableRow>
@@ -430,6 +442,37 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
           </div>
         )}
       </Card>
+
+      {transcriptEnabled && (
+        <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Transcript
+              </DialogTitle>
+              {viewing && (
+                <DialogDescription>
+                  {viewing.courseName} · {viewing.employeeName} · {viewing.trainingDate}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            {viewing && (
+              <>
+                <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted/50 p-4 text-xs leading-relaxed whitespace-pre-wrap font-mono">
+                  {buildTranscript(viewing)}
+                </pre>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => downloadTranscript(viewing)}>
+                    <Download className="h-4 w-4 mr-1.5" />
+                    Download .txt
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
