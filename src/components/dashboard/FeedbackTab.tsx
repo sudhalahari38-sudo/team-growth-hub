@@ -32,6 +32,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Minus,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,6 +45,32 @@ import {
   type Sentiment,
 } from "@/lib/feedback-types";
 import { cn } from "@/lib/utils";
+import { useDashboardSettings } from "@/lib/dashboard-settings";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+function buildTranscript(r: FeedbackRecord): string {
+  const lines = [
+    `Training Feedback Transcript`,
+    `============================`,
+    `Date:      ${r.trainingDate}`,
+    `Course:    ${r.courseName}`,
+    `Trainer:   ${r.trainerName}`,
+    `Employee:  ${r.employeeName}`,
+    `Manager:   ${r.managerName}`,
+    `Rating:    ${r.rating} / 5`,
+    ``,
+    `Trainer: Thanks for attending "${r.courseName}". How was the session?`,
+    `${r.employeeName}: ${r.comments || "(no additional comments provided)"}`,
+    `Trainer: Appreciate the feedback — we'll factor it into the next cohort.`,
+  ];
+  return lines.join("\n");
+}
 
 const ratingColor = (avg: number) => {
   if (avg >= 4) return "var(--success)";
@@ -83,6 +110,19 @@ interface Props {
 export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(15);
+  const { settings } = useDashboardSettings();
+  const transcriptEnabled = settings.transcriptEnabled;
+  const [viewing, setViewing] = useState<FeedbackRecord | null>(null);
+
+  const downloadTranscript = (r: FeedbackRecord) => {
+    const blob = new Blob([buildTranscript(r)], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transcript-${r.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const overall = useMemo(() => avg(data.map((d) => d.rating)), [data]);
 
