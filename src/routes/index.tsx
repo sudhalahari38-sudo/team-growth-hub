@@ -30,7 +30,7 @@ import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
-import { syncPercipio } from "@/server/percipio.functions";
+import { syncPercipio } from "@/lib/percipio.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
