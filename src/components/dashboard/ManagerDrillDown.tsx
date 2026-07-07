@@ -1,6 +1,13 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   managerPerformance,
@@ -10,9 +17,15 @@ import {
 } from "@/lib/training-analytics";
 import { ManagerPerformance } from "./ManagerPerformance";
 import { AtRiskTable } from "./AtRiskTable";
-import { ArrowLeft, Mail, Download, Users } from "lucide-react";
+import { ArrowLeft, Mail, Download, Users, FileText, FileSpreadsheet, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { LEADERSHIP_IDENTITY, type Identity } from "@/lib/current-user";
+import {
+  canExportTeamTranscript,
+  exportTeamTranscriptCsv,
+  exportTeamTranscriptPdf,
+} from "@/lib/transcript-export";
 
 function avatarGradient(name: string) {
   const palettes = [
