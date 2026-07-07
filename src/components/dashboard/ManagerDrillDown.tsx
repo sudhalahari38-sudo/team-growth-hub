@@ -52,6 +52,17 @@ export function ManagerDrillDown({
   drillManager: string | null;
   setDrillManager: (m: string | null) => void;
 }) {
+export function ManagerDrillDown({
+  data,
+  drillManager,
+  setDrillManager,
+  identity = LEADERSHIP_IDENTITY,
+}: {
+  data: TrainingRecord[];
+  drillManager: string | null;
+  setDrillManager: (m: string | null) => void;
+  identity?: Identity;
+}) {
   const rows = managerPerformance(data);
   const orgAvg = rows.length
     ? Math.round(rows.reduce((s, r) => s + r.completionRate, 0) / rows.length)
@@ -72,6 +83,25 @@ export function ManagerDrillDown({
       </Card>
     );
   }
+
+  const allowedTranscript = canExportTeamTranscript(identity, m.manager);
+  const handleTranscript = (format: "csv" | "pdf") => {
+    if (!allowedTranscript) {
+      toast.error("You can only export transcripts for your own team.");
+      return;
+    }
+    try {
+      const count =
+        format === "csv"
+          ? exportTeamTranscriptCsv(data, m.manager)
+          : exportTeamTranscriptPdf(data, m.manager);
+      toast.success(
+        `Downloaded ${format.toUpperCase()} transcript · ${count} records for ${m.manager}'s team`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    }
+  };
 
   const lc = lightClasses(trafficLight(m.completionRate));
   const delta = m.completionRate - orgAvg;
