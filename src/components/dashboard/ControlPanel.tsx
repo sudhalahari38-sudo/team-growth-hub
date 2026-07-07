@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -7,26 +6,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { EMPTY_FILTERS, type Filters } from "@/lib/training-types";
+import { Input } from "@/components/ui/input";
 import {
-  X,
-  Upload,
-  Download,
-  RotateCcw,
-  UserCircle2,
-  Building2,
-  Layers,
-  Tag,
-  Activity,
-  SlidersHorizontal,
-  Database,
-  Sparkles,
-  RefreshCw,
-  BookOpen,
-} from "lucide-react";
-import { parseTrainingCsv, SAMPLE_CSV } from "@/lib/csv-parser";
-import type { TrainingRecord } from "@/lib/training-types";
-import { toast } from "sonner";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { EMPTY_FILTERS, type Filters } from "@/lib/training-types";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ControlPanelProps {
@@ -40,49 +27,36 @@ interface ControlPanelProps {
     statuses: string[];
     courseNames: string[];
   };
-  isUsingMock: boolean;
-  recordCount: number;
-  onLoad: (records: TrainingRecord[]) => void;
-  onReset: () => void;
-  onSync?: () => void;
-  syncing?: boolean;
+  hideManagerFilter?: boolean;
 }
 
-function FilterField({
+function SelectField({
   label,
-  icon: Icon,
   value,
   onChange,
   options,
+  placeholder,
 }: {
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   value: string;
   onChange: (v: string) => void;
   options: string[];
+  placeholder?: string;
 }) {
   const active = value !== "all";
   return (
-    <div className="flex flex-col gap-1.5 min-w-[150px] flex-1">
+    <div className="flex flex-col gap-1 min-w-[140px]">
       <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
         {label}
       </span>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
           className={cn(
-            "h-10 bg-background border-border/70 text-sm font-medium pl-9 relative transition-all",
-            "hover:border-primary/40 hover:shadow-sm",
-            "focus:ring-2 focus:ring-primary/20 focus:border-primary/60",
+            "h-9 bg-background text-sm font-medium transition-colors",
             active && "border-primary/50 bg-primary/[0.03] text-foreground",
           )}
         >
-          <Icon
-            className={cn(
-              "h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors",
-              active ? "text-primary" : "text-muted-foreground/70",
-            )}
-          />
-          <SelectValue />
+          <SelectValue placeholder={placeholder ?? `All ${label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All {label.toLowerCase()}</SelectItem>
@@ -101,215 +75,153 @@ export function ControlPanel({
   filters,
   setFilters,
   options,
-  isUsingMock,
-  recordCount,
-  onLoad,
-  onReset,
-  onSync,
-  syncing,
+  hideManagerFilter,
 }: ControlPanelProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const isFiltered = Object.values(filters).some((v) => v !== "all");
-  const activeCount = Object.values(filters).filter((v) => v !== "all").length;
+  const searchValue = filters.courseName === "all" ? "" : filters.courseName;
 
-  const handleFile = async (file: File) => {
-    const text = await file.text();
-    const result = parseTrainingCsv(text);
-    if (result.errors.length) return toast.error(result.errors.join(" "));
-    if (!result.records.length) return toast.error("No valid rows found in the CSV.");
-    onLoad(result.records);
-    toast.success(`Loaded ${result.records.length} training records from CSV`);
-  };
+  const activeChips: { key: keyof Filters; label: string; value: string }[] = [];
+  if (searchValue) activeChips.push({ key: "courseName", label: "Search", value: searchValue });
+  if (filters.status !== "all")
+    activeChips.push({ key: "status", label: "Status", value: filters.status });
+  if (filters.department !== "all")
+    activeChips.push({ key: "department", label: "Department", value: filters.department });
+  if (filters.category !== "all")
+    activeChips.push({ key: "category", label: "Category", value: filters.category });
+  if (filters.trainingType !== "all")
+    activeChips.push({ key: "trainingType", label: "Type", value: filters.trainingType });
+  if (!hideManagerFilter && filters.manager !== "all")
+    activeChips.push({ key: "manager", label: "Manager", value: filters.manager });
 
-  const downloadSample = () => {
-    const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lms-sample.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const clearChip = (key: keyof Filters) =>
+    setFilters({ ...filters, [key]: "all" });
 
-  const filterChips: { key: keyof Filters; label: string }[] = [
-    { key: "manager", label: "Manager" },
-    { key: "department", label: "Dept" },
-    { key: "category", label: "Category" },
-    { key: "trainingType", label: "Type" },
-    { key: "status", label: "Status" },
-    { key: "courseName", label: "Training" },
-  ];
+  const moreActiveCount =
+    (filters.trainingType !== "all" ? 1 : 0) +
+    (!hideManagerFilter && filters.manager !== "all" ? 1 : 0);
 
   return (
-    <div className="relative rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
-      {/* subtle top accent */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-
-      {/* Top row: data source + actions */}
-      <div className="flex items-center justify-between gap-4 flex-wrap px-5 py-3.5 border-b border-border/60 bg-gradient-to-b from-secondary/40 to-transparent">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "icon-3d h-9 w-9",
-              isUsingMock ? "icon-3d-warning" : "icon-3d-success",
+    <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+      <div className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:flex-wrap">
+        {/* Search */}
+        <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+            Search training
+          </span>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+            <Input
+              value={searchValue}
+              onChange={(e) =>
+                setFilters({
+                  ...filters,
+                  courseName: e.target.value ? e.target.value : "all",
+                })
+              }
+              placeholder="Search training name…"
+              className="h-9 pl-9"
+            />
+            {searchValue && (
+              <button
+                type="button"
+                onClick={() => setFilters({ ...filters, courseName: "all" })}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
-          >
-            {isUsingMock ? (
-              <Sparkles className="h-4 w-4 relative z-10" />
-            ) : (
-              <Database className="h-4 w-4 relative z-10" />
-            )}
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Data source
-            </span>
-            <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-              {isUsingMock ? "Sample dataset" : "Uploaded CSV"}
-              <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                <span className="tabular-nums text-foreground">{recordCount.toLocaleString()}</span>
-                records
-              </span>
-            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <SelectField
+          label="Status"
+          value={filters.status}
+          onChange={(v) => setFilters({ ...filters, status: v })}
+          options={options.statuses}
+        />
+        <SelectField
+          label="Department"
+          value={filters.department}
+          onChange={(v) => setFilters({ ...filters, department: v })}
+          options={options.departments}
+        />
+        <SelectField
+          label="Category"
+          value={filters.category}
+          onChange={(v) => setFilters({ ...filters, category: v })}
+          options={options.categories}
+        />
+
+        {/* More filters */}
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-transparent select-none">
+            _
+          </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-9",
+                  moreActiveCount > 0 && "border-primary/50 text-primary",
+                )}
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+                More filters
+                {moreActiveCount > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                    {moreActiveCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 p-3 space-y-3">
+              <SelectField
+                label="Type"
+                value={filters.trainingType}
+                onChange={(v) => setFilters({ ...filters, trainingType: v })}
+                options={options.trainingTypes}
+              />
+              {!hideManagerFilter && (
+                <SelectField
+                  label="Manager"
+                  value={filters.manager}
+                  onChange={(v) => setFilters({ ...filters, manager: v })}
+                  options={options.managers}
+                />
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {activeChips.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap px-4 py-2.5 border-t border-border/60 bg-muted/30">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {activeChips.length} active
+          </span>
+          {activeChips.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => clearChip(c.key)}
+              className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary px-2.5 py-1 text-[11px] font-medium transition-colors"
+            >
+              <span className="text-primary/60">{c.label}:</span>
+              <span className="font-semibold">{c.value}</span>
+              <X className="h-3 w-3 opacity-60 group-hover:opacity-100" />
+            </button>
+          ))}
           <Button
             variant="ghost"
             size="sm"
-            onClick={downloadSample}
-            className="h-9 text-muted-foreground hover:text-foreground"
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="h-7 ml-auto text-muted-foreground hover:text-foreground text-xs"
           >
-            <Download className="h-4 w-4 mr-1.5" />
-            Sample
+            <X className="h-3.5 w-3.5 mr-1" /> Clear all
           </Button>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-              e.target.value = "";
-            }}
-          />
-          <Button
-            size="sm"
-            onClick={() => inputRef.current?.click()}
-            className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-glow-primary transition-shadow"
-          >
-            <Upload className="h-4 w-4 mr-1.5" />
-            Upload LMS CSV
-          </Button>
-          {onSync && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onSync}
-              disabled={syncing}
-              className="h-9"
-              title="Sync the latest learning-activity report from LMS"
-            >
-              <RefreshCw className={cn("h-4 w-4 mr-1.5", syncing && "animate-spin")} />
-              {syncing ? "Syncing…" : "Sync LMS API"}
-            </Button>
-          )}
-          {!isUsingMock && (
-            <Button variant="outline" size="sm" onClick={onReset} className="h-9">
-              <RotateCcw className="h-4 w-4 mr-1.5" />
-              Reset
-            </Button>
-          )}
         </div>
-      </div>
-
-      {/* Filters row */}
-      <div className="px-5 py-4">
-        <div className="flex items-start gap-4">
-          <div className="hidden md:flex flex-col items-center gap-1 pt-6 pr-2 border-r border-border/60 mr-1">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-muted-foreground writing-mode-vertical">
-              Filters
-            </span>
-          </div>
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <FilterField
-              label="Manager"
-              icon={UserCircle2}
-              value={filters.manager}
-              onChange={(v) => setFilters({ ...filters, manager: v })}
-              options={options.managers}
-            />
-            <FilterField
-              label="Department"
-              icon={Building2}
-              value={filters.department}
-              onChange={(v) => setFilters({ ...filters, department: v })}
-              options={options.departments}
-            />
-            <FilterField
-              label="Category"
-              icon={Layers}
-              value={filters.category}
-              onChange={(v) => setFilters({ ...filters, category: v })}
-              options={options.categories}
-            />
-            <FilterField
-              label="Type"
-              icon={Tag}
-              value={filters.trainingType}
-              onChange={(v) => setFilters({ ...filters, trainingType: v })}
-              options={options.trainingTypes}
-            />
-            <FilterField
-              label="Status"
-              icon={Activity}
-              value={filters.status}
-              onChange={(v) => setFilters({ ...filters, status: v })}
-              options={options.statuses}
-            />
-            <FilterField
-              label="Training Name"
-              icon={BookOpen}
-              value={filters.courseName}
-              onChange={(v) => setFilters({ ...filters, courseName: v })}
-              options={options.courseNames}
-            />
-          </div>
-        </div>
-
-        {/* Active filter chips */}
-        {isFiltered && (
-          <div className="mt-4 pt-4 border-t border-dashed border-border/70 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {activeCount} active
-            </span>
-            {filterChips.map((c) =>
-              filters[c.key] !== "all" ? (
-                <button
-                  key={c.key}
-                  onClick={() => setFilters({ ...filters, [c.key]: "all" })}
-                  className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary px-2.5 py-1 text-[11px] font-medium transition-colors"
-                >
-                  <span className="text-primary/60">{c.label}:</span>
-                  <span className="font-semibold">{filters[c.key]}</span>
-                  <X className="h-3 w-3 opacity-60 group-hover:opacity-100" />
-                </button>
-              ) : null,
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setFilters(EMPTY_FILTERS)}
-              className="h-7 ml-auto text-muted-foreground hover:text-foreground text-xs"
-            >
-              <X className="h-3.5 w-3.5 mr-1" /> Clear all
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
