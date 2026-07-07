@@ -334,6 +334,7 @@ function Dashboard() {
             data={filtered}
             drillManager={drillManager}
             setDrillManager={setDrillManager}
+            identity={identity}
           />
         )}
 
