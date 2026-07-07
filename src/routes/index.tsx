@@ -4,8 +4,15 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   GraduationCap,
   RefreshCw,
+  Upload,
+  Download,
+  RotateCcw,
+  Database,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { parseTrainingCsv, SAMPLE_CSV } from "@/lib/csv-parser";
 import { generateMockTrainingData } from "@/lib/mock-training-data";
 import { generateMockFeedback } from "@/lib/mock-feedback-data";
 import { applyFilters, computeKpis, uniqueOptions } from "@/lib/training-analytics";
