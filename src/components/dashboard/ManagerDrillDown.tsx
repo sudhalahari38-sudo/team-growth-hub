@@ -47,15 +47,6 @@ export function ManagerDrillDown({
   data,
   drillManager,
   setDrillManager,
-}: {
-  data: TrainingRecord[];
-  drillManager: string | null;
-  setDrillManager: (m: string | null) => void;
-}) {
-export function ManagerDrillDown({
-  data,
-  drillManager,
-  setDrillManager,
   identity = LEADERSHIP_IDENTITY,
 }: {
   data: TrainingRecord[];
