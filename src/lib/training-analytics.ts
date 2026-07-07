@@ -15,6 +15,7 @@ export function daysOverdue(r: TrainingRecord, today = TODAY): number {
 }
 
 export function applyFilters(data: TrainingRecord[], f: Filters): TrainingRecord[] {
+  const q = f.courseName === "all" ? "" : f.courseName.trim().toLowerCase();
   return data.filter(
     (r) =>
       (f.manager === "all" || r.managerName === f.manager) &&
@@ -22,7 +23,7 @@ export function applyFilters(data: TrainingRecord[], f: Filters): TrainingRecord
       (f.category === "all" || r.courseCategory === f.category) &&
       (f.trainingType === "all" || r.trainingType === f.trainingType) &&
       (f.status === "all" || r.status === f.status) &&
-      (f.courseName === "all" || r.courseName === f.courseName),
+      (q === "" || r.courseName.toLowerCase().includes(q)),
   );
 }
 
