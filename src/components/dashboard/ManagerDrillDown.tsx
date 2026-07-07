@@ -132,14 +132,40 @@ export function ManagerDrillDown({
               <Mail className="h-3.5 w-3.5 mr-1" />
               Send team reminder
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => toast.success("Exporting team report…")}
-            >
-              <Download className="h-3.5 w-3.5 mr-1" />
-              Export CSV
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={!allowedTranscript}>
+                  {allowedTranscript ? (
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                  ) : (
+                    <Lock className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  Download Transcript
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs">
+                  {m.manager}'s team · {m.assigned} records
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleTranscript("csv")}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTranscript("pdf")}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+                {!allowedTranscript && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                      You can only export your own team.
+                    </div>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
