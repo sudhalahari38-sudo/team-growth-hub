@@ -173,7 +173,23 @@ function Dashboard() {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div
+              className={cn(
+                "hidden sm:inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-3 py-1 text-[11px] font-medium text-primary-foreground/80",
+              )}
+              title={isUsingMock ? "Sample dataset" : "Uploaded / synced CSV"}
+            >
+              {isUsingMock ? (
+                <Sparkles className="h-3.5 w-3.5" />
+              ) : (
+                <Database className="h-3.5 w-3.5" />
+              )}
+              {isUsingMock ? "Sample data" : "Live data"}
+              <span className="tabular-nums text-primary-foreground">
+                {visibleData.length.toLocaleString()}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => setAutoSync((v) => !v)}
@@ -186,7 +202,7 @@ function Dashboard() {
               <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
               Auto-sync {autoSync ? "On" : "Off"}
             </button>
-            <div className="flex flex-col items-end text-xs">
+            <div className="hidden md:flex flex-col items-end text-xs">
               <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
                 Last sync
               </span>
@@ -195,6 +211,56 @@ function Dashboard() {
                 {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
               </span>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(f);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-8"
+            >
+              <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => runSync(false)}
+              disabled={syncing}
+              className="h-8"
+              title="Sync LMS API"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", syncing && "animate-spin")} />
+              Sync
+            </Button>
+            {!isUsingMock && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleReset}
+                className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
+                title="Reset to sample data"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={downloadSample}
+              className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
+              title="Download sample CSV"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
             <SettingsMenu canManage={identity.role === "leadership"} />
             <IdentitySwitcher
               identity={identity}
@@ -217,20 +283,7 @@ function Dashboard() {
             filters={filters}
             setFilters={setFilters}
             options={options}
-            isUsingMock={isUsingMock}
-            recordCount={visibleData.length}
-            onLoad={(records) => {
-              setData(records);
-              setIsUsingMock(false);
-              setFilters(EMPTY_FILTERS);
-            }}
-            onReset={() => {
-              setData(MOCK);
-              setIsUsingMock(true);
-              setFilters(EMPTY_FILTERS);
-            }}
-            onSync={() => runSync(false)}
-            syncing={syncing}
+            hideManagerFilter={managerLockedToSelf}
           />
         )}
 
