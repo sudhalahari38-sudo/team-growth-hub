@@ -142,6 +142,33 @@ function Dashboard() {
     return () => window.clearInterval(id);
   }, [autoSync]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleUpload = async (file: File) => {
+    const text = await file.text();
+    const result = parseTrainingCsv(text);
+    if (result.errors.length) return toast.error(result.errors.join(" "));
+    if (!result.records.length) return toast.error("No valid rows found in the CSV.");
+    setData(result.records);
+    setIsUsingMock(false);
+    setFilters(EMPTY_FILTERS);
+    toast.success(`Loaded ${result.records.length} training records from CSV`);
+  };
+  const handleReset = () => {
+    setData(MOCK);
+    setIsUsingMock(true);
+    setFilters(EMPTY_FILTERS);
+  };
+  const downloadSample = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lms-sample.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
   const goToCritical = () => {
     setAtRiskDefault("critical");
     setView("at-risk");
