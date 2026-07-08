@@ -15,7 +15,7 @@ interface Props {
   onChange: (i: Identity) => void;
 }
 
-const ROLE_STYLE: Record<Identity["role"], { icon: JSX.Element; bg: string; label: string }> = {
+const ROLE_STYLE: Record<Identity["role"], { icon: React.ReactNode; bg: string; label: string }> = {
   admin: {
     icon: <KeyRound className="h-3.5 w-3.5" />,
     bg: "bg-warning/30",
