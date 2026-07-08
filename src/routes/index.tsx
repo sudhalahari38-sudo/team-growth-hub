@@ -21,7 +21,9 @@ import type { FeedbackRecord } from "@/lib/feedback-types";
 import {
   applyRls,
   buildIdentities,
-  LEADERSHIP_IDENTITY,
+  ADMIN_IDENTITY,
+  canAdminister,
+  canViewOrg,
   type Identity,
 } from "@/lib/current-user";
 // KpiCard no longer used on overview
@@ -35,6 +37,7 @@ import { ManagerDrillDown } from "@/components/dashboard/ManagerDrillDown";
 import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
+import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
@@ -68,22 +71,25 @@ function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [drillManager, setDrillManager] = useState<string | null>(null);
   const [atRiskDefault, setAtRiskDefault] = useState<"all" | "critical">("all");
-  const [identity, setIdentity] = useState<Identity>(LEADERSHIP_IDENTITY);
+  const [identity, setIdentity] = useState<Identity>(ADMIN_IDENTITY);
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
   const syncedOnceRef = useRef(false);
 
+  const isAdmin = canAdminister(identity);
+  const isOrg = canViewOrg(identity);
+
   // Identities derived from full dataset
   const identities = useMemo(() => buildIdentities(data), [data]);
 
-  // RLS gate: managers see only their own team
+  // RLS gate: managers see only their own team; admin & leadership see all
   const visibleData = useMemo(() => applyRls(data, identity), [data, identity]);
   const visibleFeedback = useMemo(
-    () => (identity.role === "leadership"
+    () => (isOrg
       ? feedback
       : feedback.filter((f) => f.managerName === identity.managerName)),
-    [feedback, identity],
+    [feedback, identity, isOrg],
   );
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
@@ -108,6 +114,13 @@ function Dashboard() {
       setFilters({ ...filters, manager: "all" });
     }
   }, [identity, managerLockedToSelf]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Redirect if current tab is not allowed for this role
+  useEffect(() => {
+    if (!isOrg && (view === "leadership" || view === "managers")) {
+      setView("overview");
+    }
+  }, [isOrg, view]);
 
   const runSync = async (silent = false) => {
     setSyncing(true);
@@ -217,27 +230,31 @@ function Dashboard() {
                 {visibleData.length.toLocaleString()}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setAutoSync((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
-                autoSync ? "text-success" : "text-primary-foreground/60",
-              )}
-              title="Toggle scheduled background sync (every 15 min)"
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
-              Auto-sync {autoSync ? "On" : "Off"}
-            </button>
-            <div className="hidden md:flex flex-col items-end text-xs">
-              <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
-                Last sync
-              </span>
-              <span className="font-medium tabular-nums">
-                {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
-              </span>
-            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setAutoSync((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
+                  autoSync ? "text-success" : "text-primary-foreground/60",
+                )}
+                title="Toggle scheduled background sync (every 15 min)"
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
+                Auto-sync {autoSync ? "On" : "Off"}
+              </button>
+            )}
+            {isAdmin && (
+              <div className="hidden md:flex flex-col items-end text-xs">
+                <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
+                  Last sync
+                </span>
+                <span className="font-medium tabular-nums">
+                  {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
+                </span>
+              </div>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -249,46 +266,50 @@ function Dashboard() {
                 e.target.value = "";
               }}
             />
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => fileInputRef.current?.click()}
-              className="h-8"
-            >
-              <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => runSync(false)}
-              disabled={syncing}
-              className="h-8"
-              title="Sync LMS API"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", syncing && "animate-spin")} />
-              Sync
-            </Button>
-            {!isUsingMock && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleReset}
-                className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
-                title="Reset to sample data"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8"
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => runSync(false)}
+                  disabled={syncing}
+                  className="h-8"
+                  title="Sync LMS API"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", syncing && "animate-spin")} />
+                  Sync
+                </Button>
+                {!isUsingMock && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleReset}
+                    className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
+                    title="Reset to sample data"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={downloadSample}
+                  className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
+                  title="Download sample CSV"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+                <SettingsMenu canManage={isAdmin} />
+              </>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={downloadSample}
-              className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
-              title="Download sample CSV"
-            >
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-            <SettingsMenu canManage={identity.role === "leadership"} />
             <IdentitySwitcher
               identity={identity}
               identities={identities}
@@ -299,10 +320,11 @@ function Dashboard() {
         {/* Tabs */}
         <div className="relative max-w-[1400px] mx-auto px-6 pb-3">
           <div className="rounded-xl bg-card/95 backdrop-blur p-1 shadow-sm">
-            <DashboardTabs active={view} onChange={setView} />
+            <DashboardTabs active={view} onChange={setView} role={identity.role} />
           </div>
         </div>
       </header>
+
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
         {view !== "feedback" && (
@@ -329,7 +351,17 @@ function Dashboard() {
           </>
         )}
 
-        {view === "managers" && (
+        {view === "leadership" && isOrg && (
+          <LeadershipDashboard
+            data={filtered}
+            onDrillDepartment={(dept) => {
+              setFilters({ ...filters, department: dept });
+              setView("overview");
+            }}
+          />
+        )}
+
+        {view === "managers" && isOrg && (
           <ManagerDrillDown
             data={filtered}
             drillManager={drillManager}

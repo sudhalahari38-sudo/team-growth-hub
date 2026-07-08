@@ -16,7 +16,7 @@
  */
 import type { TrainingRecord } from "./training-types";
 
-export type IdentityRole = "leadership" | "manager";
+export type IdentityRole = "admin" | "leadership" | "manager";
 
 export interface Identity {
   id: string;
@@ -27,13 +27,19 @@ export interface Identity {
   department?: string;
 }
 
+export const ADMIN_IDENTITY: Identity = {
+  id: "admin",
+  name: "Admin (full access)",
+  role: "admin",
+};
+
 export const LEADERSHIP_IDENTITY: Identity = {
   id: "leadership",
   name: "Leadership View (all teams)",
   role: "leadership",
 };
 
-/** Build the identity list from the dataset: one per manager + leadership. */
+/** Build the identity list from the dataset: admin + leadership + one per manager. */
 export function buildIdentities(data: TrainingRecord[]): Identity[] {
   const map = new Map<string, Identity>();
   for (const r of data) {
@@ -50,18 +56,32 @@ export function buildIdentities(data: TrainingRecord[]): Identity[] {
   const managers = Array.from(map.values()).sort((a, b) =>
     a.name.localeCompare(b.name),
   );
-  return [LEADERSHIP_IDENTITY, ...managers];
+  return [ADMIN_IDENTITY, LEADERSHIP_IDENTITY, ...managers];
+}
+
+/* ------------------------------- Permissions ------------------------------ */
+
+/** Can perform administrative actions (upload CSV, sync LMS, settings, reset). */
+export function canAdminister(identity: Identity): boolean {
+  return identity.role === "admin";
+}
+
+/** Can view organization-wide data (leadership dashboard, all teams). */
+export function canViewOrg(identity: Identity): boolean {
+  return identity.role === "admin" || identity.role === "leadership";
 }
 
 /**
- * RLS gate. Leadership sees everything; managers see only their own team's
- * rows (matched by manager_name). Equivalent SQL policy:
- *   USING (manager_name = current_setting('app.user.manager'))
+ * RLS gate. Admin & leadership see everything; managers see only their own
+ * team's rows. Equivalent SQL policy:
+ *   USING (manager_name = current_setting('app.user.manager')
+ *          OR has_role(auth.uid(), 'leadership')
+ *          OR has_role(auth.uid(), 'admin'))
  */
 export function applyRls<T extends { managerName: string }>(
   rows: T[],
   identity: Identity,
 ): T[] {
-  if (identity.role === "leadership") return rows;
+  if (canViewOrg(identity)) return rows;
   return rows.filter((r) => r.managerName === identity.managerName);
 }
