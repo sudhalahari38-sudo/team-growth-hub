@@ -223,27 +223,31 @@ function Dashboard() {
                 {visibleData.length.toLocaleString()}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setAutoSync((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
-                autoSync ? "text-success" : "text-primary-foreground/60",
-              )}
-              title="Toggle scheduled background sync (every 15 min)"
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
-              Auto-sync {autoSync ? "On" : "Off"}
-            </button>
-            <div className="hidden md:flex flex-col items-end text-xs">
-              <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
-                Last sync
-              </span>
-              <span className="font-medium tabular-nums">
-                {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
-              </span>
-            </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setAutoSync((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
+                  autoSync ? "text-success" : "text-primary-foreground/60",
+                )}
+                title="Toggle scheduled background sync (every 15 min)"
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", autoSync ? "bg-success animate-pulse" : "bg-muted-foreground")} />
+                Auto-sync {autoSync ? "On" : "Off"}
+              </button>
+            )}
+            {isAdmin && (
+              <div className="hidden md:flex flex-col items-end text-xs">
+                <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
+                  Last sync
+                </span>
+                <span className="font-medium tabular-nums">
+                  {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
+                </span>
+              </div>
+            )}
             <input
               ref={fileInputRef}
               type="file"
