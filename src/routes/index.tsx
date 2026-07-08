@@ -351,7 +351,17 @@ function Dashboard() {
           </>
         )}
 
-        {view === "managers" && (
+        {view === "leadership" && isOrg && (
+          <LeadershipDashboard
+            data={filtered}
+            onDrillDepartment={(dept) => {
+              setFilters({ ...filters, department: dept });
+              setView("overview");
+            }}
+          />
+        )}
+
+        {view === "managers" && isOrg && (
           <ManagerDrillDown
             data={filtered}
             drillManager={drillManager}
