@@ -71,22 +71,25 @@ function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [drillManager, setDrillManager] = useState<string | null>(null);
   const [atRiskDefault, setAtRiskDefault] = useState<"all" | "critical">("all");
-  const [identity, setIdentity] = useState<Identity>(LEADERSHIP_IDENTITY);
+  const [identity, setIdentity] = useState<Identity>(ADMIN_IDENTITY);
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
   const syncedOnceRef = useRef(false);
 
+  const isAdmin = canAdminister(identity);
+  const isOrg = canViewOrg(identity);
+
   // Identities derived from full dataset
   const identities = useMemo(() => buildIdentities(data), [data]);
 
-  // RLS gate: managers see only their own team
+  // RLS gate: managers see only their own team; admin & leadership see all
   const visibleData = useMemo(() => applyRls(data, identity), [data, identity]);
   const visibleFeedback = useMemo(
-    () => (identity.role === "leadership"
+    () => (isOrg
       ? feedback
       : feedback.filter((f) => f.managerName === identity.managerName)),
-    [feedback, identity],
+    [feedback, identity, isOrg],
   );
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
