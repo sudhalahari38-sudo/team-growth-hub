@@ -255,46 +255,50 @@ function Dashboard() {
                 e.target.value = "";
               }}
             />
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => fileInputRef.current?.click()}
-              className="h-8"
-            >
-              <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => runSync(false)}
-              disabled={syncing}
-              className="h-8"
-              title="Sync LMS API"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", syncing && "animate-spin")} />
-              Sync
-            </Button>
-            {!isUsingMock && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleReset}
-                className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
-                title="Reset to sample data"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8"
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => runSync(false)}
+                  disabled={syncing}
+                  className="h-8"
+                  title="Sync LMS API"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", syncing && "animate-spin")} />
+                  Sync
+                </Button>
+                {!isUsingMock && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleReset}
+                    className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
+                    title="Reset to sample data"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={downloadSample}
+                  className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
+                  title="Download sample CSV"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+                <SettingsMenu canManage={isAdmin} />
+              </>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={downloadSample}
-              className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
-              title="Download sample CSV"
-            >
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-            <SettingsMenu canManage={identity.role === "leadership"} />
             <IdentitySwitcher
               identity={identity}
               identities={identities}
@@ -305,10 +309,11 @@ function Dashboard() {
         {/* Tabs */}
         <div className="relative max-w-[1400px] mx-auto px-6 pb-3">
           <div className="rounded-xl bg-card/95 backdrop-blur p-1 shadow-sm">
-            <DashboardTabs active={view} onChange={setView} />
+            <DashboardTabs active={view} onChange={setView} role={identity.role} />
           </div>
         </div>
       </header>
+
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
         {view !== "feedback" && (
