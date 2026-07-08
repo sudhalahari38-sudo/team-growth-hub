@@ -21,7 +21,9 @@ import type { FeedbackRecord } from "@/lib/feedback-types";
 import {
   applyRls,
   buildIdentities,
-  LEADERSHIP_IDENTITY,
+  ADMIN_IDENTITY,
+  canAdminister,
+  canViewOrg,
   type Identity,
 } from "@/lib/current-user";
 // KpiCard no longer used on overview
@@ -35,6 +37,7 @@ import { ManagerDrillDown } from "@/components/dashboard/ManagerDrillDown";
 import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
+import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
