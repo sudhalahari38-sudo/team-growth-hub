@@ -1,12 +1,39 @@
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, AlertTriangle, BookOpen, Sparkles, MessageSquareHeart } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  AlertTriangle,
+  BookOpen,
+  Sparkles,
+  MessageSquareHeart,
+  Building2,
+} from "lucide-react";
 import type { ReactNode } from "react";
+import type { IdentityRole } from "@/lib/current-user";
 
-export type DashboardView = "overview" | "managers" | "at-risk" | "courses" | "forecast" | "feedback";
+export type DashboardView =
+  | "overview"
+  | "leadership"
+  | "managers"
+  | "at-risk"
+  | "courses"
+  | "forecast"
+  | "feedback";
 
-const TABS: { id: DashboardView; label: string; icon: ReactNode }[] = [
+const TABS: { id: DashboardView; label: string; icon: ReactNode; roles?: IdentityRole[] }[] = [
   { id: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { id: "managers", label: "Manager Drill-Down", icon: <Users className="h-4 w-4" /> },
+  {
+    id: "leadership",
+    label: "Leadership",
+    icon: <Building2 className="h-4 w-4" />,
+    roles: ["admin", "leadership"],
+  },
+  {
+    id: "managers",
+    label: "Manager Drill-Down",
+    icon: <Users className="h-4 w-4" />,
+    roles: ["admin", "leadership"],
+  },
   { id: "at-risk", label: "At-Risk Employees", icon: <AlertTriangle className="h-4 w-4" /> },
   { id: "courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   { id: "forecast", label: "Forecast", icon: <Sparkles className="h-4 w-4" /> },
@@ -16,13 +43,16 @@ const TABS: { id: DashboardView; label: string; icon: ReactNode }[] = [
 export function DashboardTabs({
   active,
   onChange,
+  role,
 }: {
   active: DashboardView;
   onChange: (v: DashboardView) => void;
+  role: IdentityRole;
 }) {
+  const visible = TABS.filter((t) => !t.roles || t.roles.includes(role));
   return (
     <div className="flex items-center gap-1 overflow-x-auto -mx-1 px-1 pb-1">
-      {TABS.map((t) => (
+      {visible.map((t) => (
         <button
           key={t.id}
           type="button"
