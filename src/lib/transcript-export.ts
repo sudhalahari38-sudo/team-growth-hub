@@ -11,7 +11,7 @@ export function canExportTeamTranscript(
   identity: Identity,
   managerName: string,
 ): boolean {
-  if (identity.role === "leadership") return true;
+  if (identity.role === "admin" || identity.role === "leadership") return true;
   return identity.managerName === managerName;
 }
 
