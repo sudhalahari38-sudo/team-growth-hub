@@ -115,6 +115,13 @@ function Dashboard() {
     }
   }, [identity, managerLockedToSelf]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Redirect if current tab is not allowed for this role
+  useEffect(() => {
+    if (!isOrg && (view === "leadership" || view === "managers")) {
+      setView("overview");
+    }
+  }, [isOrg, view]);
+
   const runSync = async (silent = false) => {
     setSyncing(true);
     try {
