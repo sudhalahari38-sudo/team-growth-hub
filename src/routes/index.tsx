@@ -195,38 +195,35 @@ function Dashboard() {
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
 
-      <header className="relative bg-gradient-hero text-primary-foreground overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(oklch(1_0_0/0.5)_1px,transparent_1px),linear-gradient(90deg,oklch(1_0_0/0.5)_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-accent-brand/30 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-info/20 blur-3xl" />
-        <div className="relative max-w-[1400px] mx-auto px-6 py-7 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <div className="icon-3d icon-3d-brand h-12 w-12 shadow-glow-brand">
-              <GraduationCap className="h-6 w-6 relative z-10" />
+      <header className="sticky top-0 z-30 bg-card/85 backdrop-blur border-b border-border">
+        <div className="max-w-[1400px] mx-auto px-6 py-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow-primary">
+              <GraduationCap className="h-5 w-5" />
             </div>
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/60 mb-1">
-                Skillsoft LMS · Manager Console
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Skillsoft LMS · Console
               </div>
-              <h1 className="text-xl font-semibold tracking-tight leading-tight">
-                Learning &amp; Development Dashboard
+              <h1 className="truncate text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                Learning &amp; Development
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <div
               className={cn(
-                "hidden sm:inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-3 py-1 text-[11px] font-medium text-primary-foreground/80",
+                "hidden sm:inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-[11px] font-medium text-muted-foreground",
               )}
               title={isUsingMock ? "Sample dataset" : "Uploaded / synced CSV"}
             >
               {isUsingMock ? (
-                <Sparkles className="h-3.5 w-3.5" />
+                <Sparkles className="h-3.5 w-3.5 text-accent-brand" />
               ) : (
-                <Database className="h-3.5 w-3.5" />
+                <Database className="h-3.5 w-3.5 text-success" />
               )}
-              {isUsingMock ? "Sample data" : "Live data"}
-              <span className="tabular-nums text-primary-foreground">
+              <span className="text-foreground">{isUsingMock ? "Sample" : "Live"}</span>
+              <span className="tabular-nums text-muted-foreground">
                 {visibleData.length.toLocaleString()}
               </span>
             </div>
@@ -235,8 +232,8 @@ function Dashboard() {
                 type="button"
                 onClick={() => setAutoSync((v) => !v)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-primary-foreground/10",
-                  autoSync ? "text-success" : "text-primary-foreground/60",
+                  "inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-accent",
+                  autoSync ? "text-success" : "text-muted-foreground",
                 )}
                 title="Toggle scheduled background sync (every 15 min)"
               >
@@ -245,11 +242,9 @@ function Dashboard() {
               </button>
             )}
             {isAdmin && (
-              <div className="hidden md:flex flex-col items-end text-xs">
-                <span className="text-primary-foreground/60 uppercase tracking-wider text-[10px]">
-                  Last sync
-                </span>
-                <span className="font-medium tabular-nums">
+              <div className="hidden md:flex flex-col items-end text-xs text-muted-foreground">
+                <span className="uppercase tracking-wider text-[10px]">Last sync</span>
+                <span className="font-medium tabular-nums text-foreground">
                   {lastSync.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                   {syncing && <RefreshCw className="inline ml-1 h-3 w-3 animate-spin" />}
                 </span>
@@ -270,7 +265,7 @@ function Dashboard() {
               <>
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   className="h-8"
                 >
@@ -278,7 +273,6 @@ function Dashboard() {
                 </Button>
                 <Button
                   size="sm"
-                  variant="secondary"
                   onClick={() => runSync(false)}
                   disabled={syncing}
                   className="h-8"
@@ -292,7 +286,7 @@ function Dashboard() {
                     size="sm"
                     variant="ghost"
                     onClick={handleReset}
-                    className="h-8 text-primary-foreground hover:bg-primary-foreground/10"
+                    className="h-8"
                     title="Reset to sample data"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
@@ -302,7 +296,7 @@ function Dashboard() {
                   size="sm"
                   variant="ghost"
                   onClick={downloadSample}
-                  className="h-8 text-primary-foreground/80 hover:bg-primary-foreground/10"
+                  className="h-8"
                   title="Download sample CSV"
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -318,12 +312,11 @@ function Dashboard() {
           </div>
         </div>
         {/* Tabs */}
-        <div className="relative max-w-[1400px] mx-auto px-6 pb-3">
-          <div className="rounded-xl bg-card/95 backdrop-blur p-1 shadow-sm">
-            <DashboardTabs active={view} onChange={setView} role={identity.role} />
-          </div>
+        <div className="max-w-[1400px] mx-auto px-6">
+          <DashboardTabs active={view} onChange={setView} role={identity.role} />
         </div>
       </header>
+
 
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
