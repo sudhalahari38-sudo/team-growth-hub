@@ -51,17 +51,17 @@ export function DashboardTabs({
 }) {
   const visible = TABS.filter((t) => !t.roles || t.roles.includes(role));
   return (
-    <div className="flex items-center gap-1 overflow-x-auto -mx-1 px-1 pb-1">
+    <div className="flex items-center gap-1 overflow-x-auto -mx-1 px-1">
       {visible.map((t) => (
         <button
           key={t.id}
           type="button"
           onClick={() => onChange(t.id)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all",
+            "relative inline-flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors border-b-2",
             active === t.id
-              ? "bg-foreground text-background shadow-sm"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+              ? "text-accent-brand border-accent-brand"
+              : "text-muted-foreground border-transparent hover:text-foreground",
           )}
         >
           {t.icon}
