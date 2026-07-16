@@ -28,6 +28,7 @@ interface ControlPanelProps {
     courseNames: string[];
   };
   hideManagerFilter?: boolean;
+  variant?: "full" | "simple";
 }
 
 function SelectField({
@@ -76,21 +77,27 @@ export function ControlPanel({
   setFilters,
   options,
   hideManagerFilter,
+  variant = "full",
 }: ControlPanelProps) {
   const searchValue = filters.courseName === "all" ? "" : filters.courseName;
+  const employeeValue = filters.employeeName === "all" ? "" : filters.employeeName;
 
   const activeChips: { key: keyof Filters; label: string; value: string }[] = [];
-  if (searchValue) activeChips.push({ key: "courseName", label: "Search", value: searchValue });
-  if (filters.status !== "all")
-    activeChips.push({ key: "status", label: "Status", value: filters.status });
-  if (filters.department !== "all")
-    activeChips.push({ key: "department", label: "Department", value: filters.department });
-  if (filters.category !== "all")
-    activeChips.push({ key: "category", label: "Category", value: filters.category });
-  if (filters.trainingType !== "all")
-    activeChips.push({ key: "trainingType", label: "Type", value: filters.trainingType });
-  if (!hideManagerFilter && filters.manager !== "all")
-    activeChips.push({ key: "manager", label: "Manager", value: filters.manager });
+  if (searchValue) activeChips.push({ key: "courseName", label: "Training", value: searchValue });
+  if (employeeValue)
+    activeChips.push({ key: "employeeName", label: "Employee", value: employeeValue });
+  if (variant === "full") {
+    if (filters.status !== "all")
+      activeChips.push({ key: "status", label: "Status", value: filters.status });
+    if (filters.department !== "all")
+      activeChips.push({ key: "department", label: "Department", value: filters.department });
+    if (filters.category !== "all")
+      activeChips.push({ key: "category", label: "Category", value: filters.category });
+    if (filters.trainingType !== "all")
+      activeChips.push({ key: "trainingType", label: "Type", value: filters.trainingType });
+    if (!hideManagerFilter && filters.manager !== "all")
+      activeChips.push({ key: "manager", label: "Manager", value: filters.manager });
+  }
 
   const clearChip = (key: keyof Filters) =>
     setFilters({ ...filters, [key]: "all" });
@@ -98,6 +105,83 @@ export function ControlPanel({
   const moreActiveCount =
     (filters.trainingType !== "all" ? 1 : 0) +
     (!hideManagerFilter && filters.manager !== "all" ? 1 : 0);
+
+  if (variant === "simple") {
+    return (
+      <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+        <div className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:flex-wrap">
+          <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+              Employee name
+            </span>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+              <Input
+                value={employeeValue}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    employeeName: e.target.value ? e.target.value : "all",
+                  })
+                }
+                placeholder="Search employee…"
+                className="h-9 pl-9"
+              />
+              {employeeValue && (
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, employeeName: "all" })}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear employee search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+              Training name
+            </span>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+              <Input
+                value={searchValue}
+                onChange={(e) =>
+                  setFilters({
+                    ...filters,
+                    courseName: e.target.value ? e.target.value : "all",
+                  })
+                }
+                placeholder="Search training…"
+                className="h-9 pl-9"
+              />
+              {searchValue && (
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, courseName: "all" })}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear training search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+          {activeChips.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              className="h-9 text-muted-foreground hover:text-foreground text-xs"
+            >
+              <X className="h-3.5 w-3.5 mr-1" /> Clear
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-border/70 bg-card shadow-sm">
