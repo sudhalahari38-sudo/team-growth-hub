@@ -103,11 +103,12 @@ function avg(nums: number[]) {
 interface Props {
   data: FeedbackRecord[];
   isUsingMock: boolean;
-  onLoad: (records: FeedbackRecord[]) => void;
-  onReset: () => void;
+  onLoad?: (records: FeedbackRecord[]) => void;
+  onReset?: () => void;
+  hideControls?: boolean;
 }
 
-export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
+export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(15);
   const { settings } = useDashboardSettings();
@@ -178,7 +179,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
     const r = parseFeedbackCsv(text);
     if (r.errors.length) return toast.error(r.errors.join(" "));
     if (!r.records.length) return toast.error("No valid feedback rows found.");
-    onLoad(r.records);
+    onLoad?.(r.records);
     toast.success(`Loaded ${r.records.length} feedback entries`);
   };
 
@@ -195,6 +196,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {/* Source + actions */}
+      {!hideControls && (
       <div className="rounded-2xl border border-border/70 bg-card shadow-sm flex items-center justify-between gap-4 flex-wrap px-5 py-3.5">
         <div className="flex items-center gap-3">
           <div
@@ -246,7 +248,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
             <Upload className="h-4 w-4 mr-1.5" />
             Upload feedback CSV
           </Button>
-          {!isUsingMock && (
+          {!isUsingMock && onReset && (
             <Button variant="outline" size="sm" onClick={onReset} className="h-9">
               <RotateCcw className="h-4 w-4 mr-1.5" />
               Reset
@@ -254,6 +256,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset }: Props) {
           )}
         </div>
       </div>
+      )}
 
       {/* KPI strip */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
