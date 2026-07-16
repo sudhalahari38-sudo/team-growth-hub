@@ -31,13 +31,17 @@ import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart } from "@/components/dashboard/Charts";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { AtRiskTable } from "@/components/dashboard/AtRiskTable";
-import { DashboardTabs, type DashboardView } from "@/components/dashboard/DashboardTabs";
+import { DashboardTabs, type DashboardView, defaultViewForRole, tabsForRole } from "@/components/dashboard/DashboardTabs";
 import { RecommendedActions } from "@/components/dashboard/RecommendedActions";
 import { ManagerDrillDown } from "@/components/dashboard/ManagerDrillDown";
 import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
+import {
+  LeadershipInsightsPage,
+  ManagerTeamPage,
+} from "@/components/dashboard/ConsolidatedInsights";
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
@@ -115,12 +119,13 @@ function Dashboard() {
     }
   }, [identity, managerLockedToSelf]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Redirect if current tab is not allowed for this role
+  // When identity changes, snap to the default view for that role if current is not allowed
   useEffect(() => {
-    if (!isOrg && (view === "leadership" || view === "managers")) {
-      setView("overview");
+    const allowed = tabsForRole(identity.role).map((t) => t.id);
+    if (!allowed.includes(view)) {
+      setView(defaultViewForRole(identity.role));
     }
-  }, [isOrg, view]);
+  }, [identity, view]);
 
   const runSync = async (silent = false) => {
     setSyncing(true);
@@ -326,6 +331,19 @@ function Dashboard() {
             setFilters={setFilters}
             options={options}
             hideManagerFilter={managerLockedToSelf}
+            variant={isAdmin ? "full" : "simple"}
+          />
+        )}
+
+        {view === "insights" && isOrg && (
+          <LeadershipInsightsPage data={filtered} feedback={visibleFeedback} />
+        )}
+
+        {view === "my-team" && identity.role === "manager" && (
+          <ManagerTeamPage
+            data={filtered}
+            feedback={visibleFeedback}
+            identity={identity}
           />
         )}
 
