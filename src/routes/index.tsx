@@ -331,6 +331,19 @@ function Dashboard() {
             setFilters={setFilters}
             options={options}
             hideManagerFilter={managerLockedToSelf}
+            variant={isAdmin ? "full" : "simple"}
+          />
+        )}
+
+        {view === "insights" && isOrg && (
+          <LeadershipInsightsPage data={filtered} feedback={visibleFeedback} />
+        )}
+
+        {view === "my-team" && identity.role === "manager" && (
+          <ManagerTeamPage
+            data={filtered}
+            feedback={visibleFeedback}
+            identity={identity}
           />
         )}
 
