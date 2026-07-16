@@ -7,6 +7,8 @@ import {
   Sparkles,
   MessageSquareHeart,
   Building2,
+  BarChart3,
+  UsersRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { IdentityRole } from "@/lib/current-user";
@@ -18,27 +20,45 @@ export type DashboardView =
   | "at-risk"
   | "courses"
   | "forecast"
-  | "feedback";
+  | "feedback"
+  | "insights"
+  | "my-team";
 
-const TABS: { id: DashboardView; label: string; icon: ReactNode; roles?: IdentityRole[] }[] = [
+interface Tab {
+  id: DashboardView;
+  label: string;
+  icon: ReactNode;
+}
+
+const ADMIN_TABS: Tab[] = [
   { id: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
-  {
-    id: "leadership",
-    label: "Leadership",
-    icon: <Building2 className="h-4 w-4" />,
-    roles: ["admin", "leadership"],
-  },
-  {
-    id: "managers",
-    label: "Manager Drill-Down",
-    icon: <Users className="h-4 w-4" />,
-    roles: ["admin", "leadership"],
-  },
+  { id: "leadership", label: "Leadership", icon: <Building2 className="h-4 w-4" /> },
+  { id: "managers", label: "Manager Drill-Down", icon: <Users className="h-4 w-4" /> },
   { id: "at-risk", label: "At-Risk Employees", icon: <AlertTriangle className="h-4 w-4" /> },
   { id: "courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   { id: "forecast", label: "Forecast", icon: <Sparkles className="h-4 w-4" /> },
   { id: "feedback", label: "Training Feedback", icon: <MessageSquareHeart className="h-4 w-4" /> },
 ];
+
+const LEADERSHIP_TABS: Tab[] = [
+  { id: "insights", label: "Training Insights", icon: <BarChart3 className="h-4 w-4" /> },
+];
+
+const MANAGER_TABS: Tab[] = [
+  { id: "my-team", label: "My Team", icon: <UsersRound className="h-4 w-4" /> },
+];
+
+export function tabsForRole(role: IdentityRole): Tab[] {
+  if (role === "admin") return ADMIN_TABS;
+  if (role === "leadership") return LEADERSHIP_TABS;
+  return MANAGER_TABS;
+}
+
+export function defaultViewForRole(role: IdentityRole): DashboardView {
+  if (role === "admin") return "overview";
+  if (role === "leadership") return "insights";
+  return "my-team";
+}
 
 export function DashboardTabs({
   active,
@@ -49,7 +69,8 @@ export function DashboardTabs({
   onChange: (v: DashboardView) => void;
   role: IdentityRole;
 }) {
-  const visible = TABS.filter((t) => !t.roles || t.roles.includes(role));
+  const visible = tabsForRole(role);
+  if (visible.length <= 1) return null;
   return (
     <div className="flex items-center gap-1 overflow-x-auto -mx-1 px-1">
       {visible.map((t) => (
