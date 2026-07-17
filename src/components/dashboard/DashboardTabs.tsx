@@ -21,8 +21,7 @@ export type DashboardView =
   | "courses"
   | "forecast"
   | "feedback"
-  | "insights"
-  | "my-team";
+  | "training";
 
 interface Tab {
   id: DashboardView;
@@ -41,11 +40,11 @@ const ADMIN_TABS: Tab[] = [
 ];
 
 const LEADERSHIP_TABS: Tab[] = [
-  { id: "insights", label: "Training Insights", icon: <BarChart3 className="h-4 w-4" /> },
+  { id: "training", label: "Training Dashboard", icon: <BarChart3 className="h-4 w-4" /> },
 ];
 
 const MANAGER_TABS: Tab[] = [
-  { id: "my-team", label: "My Team", icon: <UsersRound className="h-4 w-4" /> },
+  { id: "training", label: "My Team", icon: <UsersRound className="h-4 w-4" /> },
 ];
 
 export function tabsForRole(role: IdentityRole): Tab[] {
@@ -56,9 +55,9 @@ export function tabsForRole(role: IdentityRole): Tab[] {
 
 export function defaultViewForRole(role: IdentityRole): DashboardView {
   if (role === "admin") return "overview";
-  if (role === "leadership") return "insights";
-  return "my-team";
+  return "training";
 }
+
 
 export function DashboardTabs({
   active,

@@ -38,10 +38,8 @@ import { CoursesTab } from "@/components/dashboard/CoursesTab";
 import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
-import {
-  LeadershipInsightsPage,
-  ManagerTeamPage,
-} from "@/components/dashboard/ConsolidatedInsights";
+import { TrainingCentricDashboard } from "@/components/dashboard/TrainingCentricDashboard";
+
 import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
@@ -335,17 +333,14 @@ function Dashboard() {
           />
         )}
 
-        {view === "insights" && isOrg && (
-          <LeadershipInsightsPage data={filtered} feedback={visibleFeedback} />
-        )}
-
-        {view === "my-team" && identity.role === "manager" && (
-          <ManagerTeamPage
+        {view === "training" && !isAdmin && (
+          <TrainingCentricDashboard
             data={filtered}
             feedback={visibleFeedback}
             identity={identity}
           />
         )}
+
 
         {view === "overview" && (
           <>
