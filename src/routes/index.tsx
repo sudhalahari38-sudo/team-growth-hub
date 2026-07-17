@@ -335,17 +335,14 @@ function Dashboard() {
           />
         )}
 
-        {view === "insights" && isOrg && (
-          <LeadershipInsightsPage data={filtered} feedback={visibleFeedback} />
-        )}
-
-        {view === "my-team" && identity.role === "manager" && (
-          <ManagerTeamPage
+        {view === "training" && !isAdmin && (
+          <TrainingCentricDashboard
             data={filtered}
             feedback={visibleFeedback}
             identity={identity}
           />
         )}
+
 
         {view === "overview" && (
           <>
