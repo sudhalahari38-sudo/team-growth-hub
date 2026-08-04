@@ -80,26 +80,59 @@ function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [drillManager, setDrillManager] = useState<string | null>(null);
   const [atRiskDefault, setAtRiskDefault] = useState<"all" | "critical">("all");
-  const [identity, setIdentity] = useState<Identity>(ADMIN_IDENTITY);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [viewer, setViewer] = useState<IdentityRole>("admin");
+  const [impersonatedManager, setImpersonatedManager] = useState<string>("");
+  /** Manager view scope: own reporting hierarchy vs read-only org-wide */
+  const [teamScope, setTeamScope] = useState<"team" | "org">("team");
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
   const syncedOnceRef = useRef(false);
 
-  const isAdmin = canAdminister(identity);
-  const isOrg = canViewOrg(identity);
+  // Restore session
+  useEffect(() => {
+    const a = loadAccount();
+    if (a) {
+      setAccount(a);
+      setViewer(a.role);
+      if (a.managerName) setImpersonatedManager(a.managerName);
+    }
+  }, []);
 
   // Identities derived from full dataset
   const identities = useMemo(() => buildIdentities(data), [data]);
-
-  // RLS gate: managers see only their own team; admin & leadership see all
-  const visibleData = useMemo(() => applyRls(data, identity), [data, identity]);
-  const visibleFeedback = useMemo(
-    () => (isOrg
-      ? feedback
-      : feedback.filter((f) => f.managerName === identity.managerName)),
-    [feedback, identity, isOrg],
+  const managerNames = useMemo(
+    () => identities.filter((i) => i.role === "manager").map((i) => i.name),
+    [identities],
   );
+
+  const identity: Identity = useMemo(
+    () =>
+      account
+        ? identityForViewer(account, viewer, impersonatedManager || managerNames[0])
+        : { id: "admin", name: "Admin (full access)", role: "admin" },
+    [account, viewer, impersonatedManager, managerNames],
+  );
+
+  const isAdmin = canAdminister(identity);
+  const isOrg = canViewOrg(identity);
+  const isManagerView = identity.role === "manager";
+  const orgReadOnly = isManagerView && teamScope === "org";
+
+  // RLS gate: manager view sees own team; "Organization" scope is read-only org-wide
+  const visibleData = useMemo(
+    () => (orgReadOnly ? data : applyRls(data, identity)),
+    [data, identity, orgReadOnly],
+  );
+  const visibleFeedback = useMemo(
+    () =>
+      isOrg || orgReadOnly
+        ? feedback
+        : feedback.filter((f) => f.managerName === identity.managerName),
+    [feedback, identity, isOrg, orgReadOnly],
+  );
+
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
   const kpis = useMemo(() => computeKpis(filtered), [filtered]);
