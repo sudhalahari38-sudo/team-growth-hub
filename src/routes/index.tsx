@@ -21,11 +21,16 @@ import type { FeedbackRecord } from "@/lib/feedback-types";
 import {
   applyRls,
   buildIdentities,
-  ADMIN_IDENTITY,
   canAdminister,
   canViewOrg,
+  identityForViewer,
+  loadAccount,
+  saveAccount,
+  type Account,
   type Identity,
+  type IdentityRole,
 } from "@/lib/current-user";
+
 // KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart } from "@/components/dashboard/Charts";
@@ -40,7 +45,9 @@ import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
 import { TrainingCentricDashboard } from "@/components/dashboard/TrainingCentricDashboard";
 
-import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
+import { ViewerSwitcher } from "@/components/dashboard/ViewerSwitcher";
+import { LoginScreen } from "@/components/dashboard/LoginScreen";
+
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
 import { cn } from "@/lib/utils";
@@ -73,26 +80,59 @@ function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [drillManager, setDrillManager] = useState<string | null>(null);
   const [atRiskDefault, setAtRiskDefault] = useState<"all" | "critical">("all");
-  const [identity, setIdentity] = useState<Identity>(ADMIN_IDENTITY);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [viewer, setViewer] = useState<IdentityRole>("admin");
+  const [impersonatedManager, setImpersonatedManager] = useState<string>("");
+  /** Manager view scope: own reporting hierarchy vs read-only org-wide */
+  const [teamScope, setTeamScope] = useState<"team" | "org">("team");
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
   const syncedOnceRef = useRef(false);
 
-  const isAdmin = canAdminister(identity);
-  const isOrg = canViewOrg(identity);
+  // Restore session
+  useEffect(() => {
+    const a = loadAccount();
+    if (a) {
+      setAccount(a);
+      setViewer(a.role);
+      if (a.managerName) setImpersonatedManager(a.managerName);
+    }
+  }, []);
 
   // Identities derived from full dataset
   const identities = useMemo(() => buildIdentities(data), [data]);
-
-  // RLS gate: managers see only their own team; admin & leadership see all
-  const visibleData = useMemo(() => applyRls(data, identity), [data, identity]);
-  const visibleFeedback = useMemo(
-    () => (isOrg
-      ? feedback
-      : feedback.filter((f) => f.managerName === identity.managerName)),
-    [feedback, identity, isOrg],
+  const managerNames = useMemo(
+    () => identities.filter((i) => i.role === "manager").map((i) => i.name),
+    [identities],
   );
+
+  const identity: Identity = useMemo(
+    () =>
+      account
+        ? identityForViewer(account, viewer, impersonatedManager || managerNames[0])
+        : { id: "admin", name: "Admin (full access)", role: "admin" },
+    [account, viewer, impersonatedManager, managerNames],
+  );
+
+  const isAdmin = canAdminister(identity);
+  const isOrg = canViewOrg(identity);
+  const isManagerView = identity.role === "manager";
+  const orgReadOnly = isManagerView && teamScope === "org";
+
+  // RLS gate: manager view sees own team; "Organization" scope is read-only org-wide
+  const visibleData = useMemo(
+    () => (orgReadOnly ? data : applyRls(data, identity)),
+    [data, identity, orgReadOnly],
+  );
+  const visibleFeedback = useMemo(
+    () =>
+      isOrg || orgReadOnly
+        ? feedback
+        : feedback.filter((f) => f.managerName === identity.managerName),
+    [feedback, identity, isOrg, orgReadOnly],
+  );
+
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
   const kpis = useMemo(() => computeKpis(filtered), [filtered]);
@@ -194,7 +234,27 @@ function Dashboard() {
     setView("managers");
   };
 
+  if (!account) {
+    return (
+      <>
+        <Toaster richColors position="top-right" />
+        <LoginScreen
+          managerNames={managerNames}
+          onLogin={(a) => {
+            saveAccount(a);
+            setAccount(a);
+            setViewer(a.role);
+            setTeamScope("team");
+            if (a.managerName) setImpersonatedManager(a.managerName);
+            setView(defaultViewForRole(a.role));
+          }}
+        />
+      </>
+    );
+  }
+
   return (
+
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
 
@@ -307,11 +367,24 @@ function Dashboard() {
                 <SettingsMenu canManage={isAdmin} />
               </>
             )}
-            <IdentitySwitcher
-              identity={identity}
-              identities={identities}
-              onChange={setIdentity}
-            />
+            {account && (
+              <ViewerSwitcher
+                account={account}
+                viewer={viewer}
+                onViewerChange={(r) => {
+                  setViewer(r);
+                  setTeamScope("team");
+                }}
+                managerNames={managerNames}
+                impersonatedManager={impersonatedManager || managerNames[0]}
+                onImpersonateManager={setImpersonatedManager}
+                onLogout={() => {
+                  saveAccount(null);
+                  setAccount(null);
+                }}
+              />
+            )}
+
           </div>
         </div>
         {/* Tabs */}
@@ -323,6 +396,34 @@ function Dashboard() {
 
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
+        {isManagerView && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="inline-flex rounded-lg border border-border bg-secondary p-0.5">
+              {(["team", "org"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTeamScope(s)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                    teamScope === s
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s === "team" ? "My team" : "Organization"}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {teamScope === "team"
+                ? `Direct & indirect reportees of ${identity.managerName}`
+                : "Organization-wide training data · read-only"}
+            </span>
+          </div>
+        )}
+
+
         {view !== "feedback" && (
           <ControlPanel
             filters={filters}

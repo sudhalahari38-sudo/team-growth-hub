@@ -85,3 +85,64 @@ export function applyRls<T extends { managerName: string }>(
   if (canViewOrg(identity)) return rows;
   return rows.filter((r) => r.managerName === identity.managerName);
 }
+
+/* ----------------------------- Accounts & login ---------------------------- */
+
+/** A signed-in account. The account role determines which Viewers are allowed. */
+export interface Account {
+  id: string;
+  name: string;
+  role: IdentityRole;
+  /** Manager name as it appears in the dataset (only for manager accounts) */
+  managerName?: string;
+  department?: string;
+}
+
+export const VIEWER_LABELS: Record<IdentityRole, string> = {
+  admin: "Admin View",
+  leadership: "Leadership View",
+  manager: "Manager View",
+};
+
+/** Which viewers an account may switch into. */
+export function allowedViewers(role: IdentityRole): IdentityRole[] {
+  if (role === "admin") return ["admin", "leadership", "manager"];
+  if (role === "leadership") return ["leadership", "manager"];
+  return ["manager"];
+}
+
+/** Build the identity used by the dashboard from account + selected viewer. */
+export function identityForViewer(
+  account: Account,
+  viewer: IdentityRole,
+  impersonatedManager?: string,
+): Identity {
+  if (viewer === "admin") return ADMIN_IDENTITY;
+  if (viewer === "leadership") return LEADERSHIP_IDENTITY;
+  const managerName = account.managerName ?? impersonatedManager ?? "";
+  return {
+    id: `mgr:${managerName}`,
+    name: managerName || "Manager",
+    role: "manager",
+    managerName,
+    department: account.department,
+  };
+}
+
+const ACCOUNT_KEY = "ld.account";
+
+export function loadAccount(): Account | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_KEY);
+    return raw ? (JSON.parse(raw) as Account) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveAccount(a: Account | null) {
+  if (typeof window === "undefined") return;
+  if (a) window.localStorage.setItem(ACCOUNT_KEY, JSON.stringify(a));
+  else window.localStorage.removeItem(ACCOUNT_KEY);
+}
