@@ -234,7 +234,27 @@ function Dashboard() {
     setView("managers");
   };
 
+  if (!account) {
+    return (
+      <>
+        <Toaster richColors position="top-right" />
+        <LoginScreen
+          managerNames={managerNames}
+          onLogin={(a) => {
+            saveAccount(a);
+            setAccount(a);
+            setViewer(a.role);
+            setTeamScope("team");
+            if (a.managerName) setImpersonatedManager(a.managerName);
+            setView(defaultViewForRole(a.role));
+          }}
+        />
+      </>
+    );
+  }
+
   return (
+
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
 
