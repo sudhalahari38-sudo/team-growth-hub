@@ -21,11 +21,16 @@ import type { FeedbackRecord } from "@/lib/feedback-types";
 import {
   applyRls,
   buildIdentities,
-  ADMIN_IDENTITY,
   canAdminister,
   canViewOrg,
+  identityForViewer,
+  loadAccount,
+  saveAccount,
+  type Account,
   type Identity,
+  type IdentityRole,
 } from "@/lib/current-user";
+
 // KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
 import { CategoryChart } from "@/components/dashboard/Charts";
