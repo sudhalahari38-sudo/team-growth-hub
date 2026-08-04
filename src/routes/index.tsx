@@ -347,11 +347,24 @@ function Dashboard() {
                 <SettingsMenu canManage={isAdmin} />
               </>
             )}
-            <IdentitySwitcher
-              identity={identity}
-              identities={identities}
-              onChange={setIdentity}
-            />
+            {account && (
+              <ViewerSwitcher
+                account={account}
+                viewer={viewer}
+                onViewerChange={(r) => {
+                  setViewer(r);
+                  setTeamScope("team");
+                }}
+                managerNames={managerNames}
+                impersonatedManager={impersonatedManager || managerNames[0]}
+                onImpersonateManager={setImpersonatedManager}
+                onLogout={() => {
+                  saveAccount(null);
+                  setAccount(null);
+                }}
+              />
+            )}
+
           </div>
         </div>
         {/* Tabs */}
