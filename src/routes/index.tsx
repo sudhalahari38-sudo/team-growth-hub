@@ -45,7 +45,9 @@ import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
 import { TrainingCentricDashboard } from "@/components/dashboard/TrainingCentricDashboard";
 
-import { IdentitySwitcher } from "@/components/dashboard/IdentitySwitcher";
+import { ViewerSwitcher } from "@/components/dashboard/ViewerSwitcher";
+import { LoginScreen } from "@/components/dashboard/LoginScreen";
+
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
 import { cn } from "@/lib/utils";
