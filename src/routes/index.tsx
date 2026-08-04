@@ -396,6 +396,34 @@ function Dashboard() {
 
 
       <main className="max-w-[1400px] mx-auto px-6 py-7 flex flex-col gap-6">
+        {isManagerView && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="inline-flex rounded-lg border border-border bg-secondary p-0.5">
+              {(["team", "org"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTeamScope(s)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                    teamScope === s
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s === "team" ? "My team" : "Organization"}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {teamScope === "team"
+                ? `Direct & indirect reportees of ${identity.managerName}`
+                : "Organization-wide training data · read-only"}
+            </span>
+          </div>
+        )}
+
+
         {view !== "feedback" && (
           <ControlPanel
             filters={filters}
