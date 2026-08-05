@@ -819,6 +819,7 @@ function TrainingDetail({
                 <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground hidden md:table-cell">Completed</th>
                 <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground hidden sm:table-cell">Hours</th>
                 <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Score</th>
+                <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Nudge</th>
               </tr>
             </thead>
             <tbody>
@@ -838,12 +839,41 @@ function TrainingDetail({
                     </td>
                     <td className="px-3 py-1.5 text-right tabular-nums hidden sm:table-cell">{derivedHours(r)}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{derivedScore(r)}</td>
+                    <td className="px-3 py-1.5 text-right">
+                      {od > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNudgeTarget({
+                              employeeId: r.employeeId,
+                              employeeName: r.employeeName,
+                              managerName: r.managerName,
+                              courseName: r.courseName,
+                              dueDate: r.dueDate,
+                              daysOverdue: od,
+                            })
+                          }
+                          className="rounded-md border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-foreground hover:bg-secondary"
+                        >
+                          Send nudge
+                        </button>
+                      ) : (
+                        <span className="text-muted-foreground/60 text-[10px]">—</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+        <NudgeDialog
+          open={!!nudgeTarget}
+          onOpenChange={(v) => !v && setNudgeTarget(null)}
+          target={nudgeTarget}
+        />
+      </div>
+
       </div>
 
       {/* Feedback + Forecast side panel */}
