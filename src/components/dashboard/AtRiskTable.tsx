@@ -483,7 +483,14 @@ export function AtRiskTable({
           </Button>
         </div>
       )}
+      <NudgeDialog
+        open={!!nudgeTarget}
+        onOpenChange={(v) => !v && setNudgeTarget(null)}
+        target={nudgeTarget}
+        sentBy={managerFilter ?? "Manager"}
+      />
     </Card>
+
   );
 }
 
