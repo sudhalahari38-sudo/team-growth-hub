@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { atRiskEmployees } from "@/lib/training-analytics";
 import { sendNudge } from "@/lib/nudge.functions";
+import { NudgeDialog, type NudgeTarget } from "@/components/dashboard/NudgeDialog";
+
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   AlertTriangle,
