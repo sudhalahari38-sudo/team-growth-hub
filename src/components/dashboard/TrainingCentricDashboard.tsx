@@ -26,10 +26,15 @@ import {
   isOverdue,
   daysOverdue,
   monthlyCompletionTrend,
+  executiveMetricTrends,
   TODAY,
   trafficLight,
   lightClasses,
 } from "@/lib/training-analytics";
+import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
+import { NudgeDialog, type NudgeTarget } from "./NudgeDialog";
+
+
 
 /* -------------------------------- KPI strip ------------------------------- */
 
@@ -57,49 +62,87 @@ function KpiTile({
   sublabel,
   icon,
   tone,
+  definition,
+  formula,
+  previous,
+  higherIsBetter = true,
+  unit = "",
+  currentNumber,
+  action,
 }: {
   label: string;
   value: string | number;
   sublabel?: string;
   icon: React.ReactNode;
   tone: Tone;
+  definition: string;
+  formula: string;
+  previous?: number;
+  higherIsBetter?: boolean;
+  unit?: string;
+  currentNumber?: number;
+  action?: string;
 }) {
+  const cmp =
+    previous !== undefined && currentNumber !== undefined
+      ? deltaInfo(currentNumber, previous, higherIsBetter, unit)
+      : {};
+  const fmtPrev =
+    previous !== undefined
+      ? `${unit === "%" ? previous.toFixed(1) : Math.round(previous).toLocaleString()}${unit} (last month)`
+      : undefined;
+
   return (
-    <Card className="p-4 border-border/60 shadow-sm bg-card">
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
-            toneBg[tone],
-          )}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            {label}
-          </div>
+    <KpiTooltip
+      info={{
+        title: label,
+        definition,
+        formula,
+        current: String(value),
+        previous: fmtPrev,
+        ...cmp,
+        lastUpdated: formatRefreshed(),
+        action,
+      }}
+    >
+      <Card className="p-4 border-border/60 shadow-sm bg-card hover:shadow-md transition-shadow">
+        <div className="flex items-start gap-3">
           <div
             className={cn(
-              "mt-0.5 text-xl font-bold leading-tight tabular-nums",
-              toneText[tone],
+              "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+              toneBg[tone],
             )}
           >
-            {value}
+            {icon}
           </div>
-          {sublabel && (
-            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
-              {sublabel}
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              {label}
             </div>
-          )}
+            <div
+              className={cn(
+                "mt-0.5 text-xl font-bold leading-tight tabular-nums",
+                toneText[tone],
+              )}
+            >
+              {value}
+            </div>
+            {sublabel && (
+              <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                {sublabel}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </KpiTooltip>
   );
 }
 
 function KpiStrip({ data }: { data: TrainingRecord[] }) {
   const k = computeKpis(data);
+  const t = executiveMetricTrends(data);
+  const prevOf = (s: { value: number }[]) => s[s.length - 2]?.value;
   const inProgress = data.filter((r) => r.status === "In Progress").length;
   const notStarted = data.filter((r) => r.status === "Not Started").length;
   return (
@@ -110,6 +153,11 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
         sublabel="trainings"
         icon={<BookOpen className="h-4 w-4" />}
         tone="primary"
+        definition="Every training assignment in your current scope, regardless of status."
+        formula="COUNT(all training assignments in scope)"
+        currentNumber={k.totalAssigned}
+        previous={prevOf(t.assigned)}
+        action="Click to review all assigned trainings."
       />
       <KpiTile
         label="In Progress"
@@ -117,6 +165,9 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
         sublabel={`${pct(inProgress, k.totalAssigned)}%`}
         icon={<Clock className="h-4 w-4" />}
         tone="info"
+        definition="Trainings started but not yet finished by the learner."
+        formula="COUNT(assignments WHERE status = 'In Progress')"
+        action="Click to view learners currently mid-course."
       />
       <KpiTile
         label="Completed"
@@ -124,6 +175,11 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
         sublabel={`${k.completionRate.toFixed(1)}%`}
         icon={<CheckCircle2 className="h-4 w-4" />}
         tone="success"
+        definition="Assignments marked Completed in the LMS."
+        formula="COUNT(assignments WHERE status = 'Completed')"
+        currentNumber={k.completed}
+        previous={prevOf(t.completed)}
+        action="Click to view completions by course."
       />
       <KpiTile
         label="Overdue"
@@ -131,6 +187,12 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
         sublabel="need action"
         icon={<AlertTriangle className="h-4 w-4" />}
         tone="danger"
+        definition="Assignments past their due date and still incomplete."
+        formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
+        currentNumber={k.overdueCount}
+        previous={prevOf(t.overdue)}
+        higherIsBetter={false}
+        action="Click to view overdue learners and send nudges."
       />
       <KpiTile
         label="Not Started"
@@ -138,12 +200,21 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
         sublabel={`${pct(notStarted, k.totalAssigned)}%`}
         icon={<Circle className="h-4 w-4" />}
         tone="muted"
+        definition="Assignments the learner has not opened yet."
+        formula="COUNT(assignments WHERE status = 'Not Started')"
+        action="Click to view learners yet to begin."
       />
       <KpiTile
         label="Mandatory Compliance"
         value={`${k.mandatoryComplianceRate.toFixed(1)}%`}
         sublabel="target 80%"
         icon={<ShieldCheck className="h-4 w-4" />}
+        definition="Completion rate for Mandatory (compliance) trainings only. Target: 80%."
+        formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
+        currentNumber={k.mandatoryComplianceRate}
+        previous={prevOf(t.mandatoryCompliance)}
+        unit="%"
+        action="Click to view employees with open mandatory training."
         tone={
           k.mandatoryComplianceRate >= 80
             ? "success"
@@ -155,6 +226,7 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
     </div>
   );
 }
+
 
 function pct(n: number, d: number) {
   return d ? Math.round((n / d) * 100) : 0;
@@ -708,6 +780,8 @@ function TrainingDetail({
   data: TrainingRecord[];
   feedback: FeedbackRecord[];
 }) {
+  const [nudgeTarget, setNudgeTarget] = useState<NudgeTarget | null>(null);
+
   const completed = data.filter((r) => r.status === "Completed").length;
   const target = Math.ceil(data.length * 0.8);
   const additionalNeeded = Math.max(0, target - completed);
@@ -745,6 +819,7 @@ function TrainingDetail({
                 <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground hidden md:table-cell">Completed</th>
                 <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground hidden sm:table-cell">Hours</th>
                 <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Score</th>
+                <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Nudge</th>
               </tr>
             </thead>
             <tbody>
@@ -764,13 +839,41 @@ function TrainingDetail({
                     </td>
                     <td className="px-3 py-1.5 text-right tabular-nums hidden sm:table-cell">{derivedHours(r)}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{derivedScore(r)}</td>
+                    <td className="px-3 py-1.5 text-right">
+                      {od > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNudgeTarget({
+                              employeeId: r.employeeId,
+                              employeeName: r.employeeName,
+                              managerName: r.managerName,
+                              courseName: r.courseName,
+                              dueDate: r.dueDate,
+                              daysOverdue: od,
+                            })
+                          }
+                          className="rounded-md border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-foreground hover:bg-secondary"
+                        >
+                          Send nudge
+                        </button>
+                      ) : (
+                        <span className="text-muted-foreground/60 text-[10px]">—</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+        <NudgeDialog
+          open={!!nudgeTarget}
+          onOpenChange={(v) => !v && setNudgeTarget(null)}
+          target={nudgeTarget}
+        />
       </div>
+
 
       {/* Feedback + Forecast side panel */}
       <div className="flex flex-col gap-3">

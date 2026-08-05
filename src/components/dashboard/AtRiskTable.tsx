@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { atRiskEmployees } from "@/lib/training-analytics";
 import { sendNudge } from "@/lib/nudge.functions";
+import { NudgeDialog, type NudgeTarget } from "@/components/dashboard/NudgeDialog";
+
 import type { TrainingRecord } from "@/lib/training-types";
 import {
   AlertTriangle,
@@ -70,8 +72,9 @@ export function AtRiskTable({
   const [bucket, setBucket] = useState<RiskBucket>(defaultBucket);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [nudgingAll, setNudgingAll] = useState(false);
-  const [nudgingId, setNudgingId] = useState<string | null>(null);
+  const [nudgeTarget, setNudgeTarget] = useState<NudgeTarget | null>(null);
   const nudgeFn = useServerFn(sendNudge);
+
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -421,55 +424,26 @@ export function AtRiskTable({
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
-                        disabled={nudgingId === r.employeeId}
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          setNudgingId(r.employeeId);
-                          try {
-                            const res = await nudgeFn({
-                              data: {
-                                channel: "email",
-                                source: "at-risk:single",
-                                recipients: [
-                                  {
-                                    employeeId: r.employeeId,
-                                    employeeName: r.employeeName,
-                                    managerName: r.managerName,
-                                    courseName: r.courseName,
-                                    daysOverdue: r.daysOverdue,
-                                  },
-                                ],
-                              },
-                            });
-                            if (res.success) {
-                              toast.success(`Nudge sent to ${r.employeeName}`, {
-                                description: `Reminder ${res.reminderId} for "${r.courseName}" delivered.`,
-                              });
-                            } else {
-                              toast.error(`Nudge failed for ${r.employeeName}`, {
-                                description: res.errors[0]?.reason ?? "Unknown error",
-                              });
-                            }
-                          } catch (err) {
-                            toast.error("Nudge failed", {
-                              description: err instanceof Error ? err.message : "Unknown error",
-                            });
-                          } finally {
-                            setNudgingId(null);
-                          }
+                          setNudgeTarget({
+                            employeeId: r.employeeId,
+                            employeeName: r.employeeName,
+                            managerName: r.managerName,
+                            courseName: r.courseName,
+                            dueDate: r.dueDate,
+                            daysOverdue: r.daysOverdue,
+                          });
                         }}
                       >
-                        <Bell className="h-3 w-3 mr-1" />
-                        {nudgingId === r.employeeId ? "Sending…" : "Nudge"}
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Mail className="h-3 w-3 mr-1" />
-                        Email reminder
+                        Send nudge
                       </Button>
                       <Button size="sm" className="h-7 text-xs">
                         Mark as escalated
                       </Button>
                     </div>
+
                   </div>
                 </div>
               )}
@@ -509,7 +483,14 @@ export function AtRiskTable({
           </Button>
         </div>
       )}
+      <NudgeDialog
+        open={!!nudgeTarget}
+        onOpenChange={(v) => !v && setNudgeTarget(null)}
+        target={nudgeTarget}
+        sentBy={managerFilter ?? "Manager"}
+      />
     </Card>
+
   );
 }
 

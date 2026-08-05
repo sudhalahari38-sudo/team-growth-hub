@@ -14,7 +14,11 @@ const inputSchema = z.object({
   recipients: z.array(recipientSchema).min(1),
   channel: z.enum(["email", "slack", "sms"]).default("email"),
   source: z.string().optional(),
+  tier: z.enum(["reminder", "warning", "escalation"]).optional(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
+
 
 export type NudgeRecipient = z.infer<typeof recipientSchema>;
 export type NudgeResult = {

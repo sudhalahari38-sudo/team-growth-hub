@@ -10,6 +10,8 @@ import {
   Activity,
 } from "lucide-react";
 import { Sparkwave } from "./Sparkwave";
+import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
+
 import { cn } from "@/lib/utils";
 import type { MetricPoint } from "@/lib/training-analytics";
 
@@ -48,6 +50,10 @@ function WaveRow({
   trend,
   target,
   formatValue,
+  definition,
+  formula,
+  action,
+  unit = "",
 }: {
   id: string;
   label: string;
@@ -59,6 +65,10 @@ function WaveRow({
   trend: MetricPoint[];
   target?: number;
   formatValue?: (v: number) => string;
+  definition: string;
+  formula: string;
+  action?: string;
+  unit?: string;
 }) {
   const first = trend[0]?.value ?? 0;
   const last = trend[trend.length - 1]?.value ?? 0;
@@ -68,55 +78,73 @@ function WaveRow({
   const positiveIsGood = tone !== "danger";
   const good = positiveIsGood ? up : !up;
 
+  const prev = trend[trend.length - 2]?.value ?? first;
+  const fmt = formatValue ?? ((v: number) => v.toLocaleString());
+  const d = deltaInfo(last, prev, positiveIsGood, unit);
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card hover:shadow-sm transition-shadow">
-      <div className={cn("absolute inset-y-0 left-0 w-1", toneStrip[tone])} />
-      <div className="pl-4 pr-3 py-3 grid grid-cols-12 items-center gap-3">
-        <div className="col-span-12 sm:col-span-5 flex items-center gap-3 min-w-0">
-          <div className={cn(toneIcon[tone], "h-9 w-9 shrink-0")}>
-            <span className="relative z-10 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground truncate">
-              {label}
+    <KpiTooltip
+      info={{
+        title: label,
+        definition,
+        formula,
+        current: value,
+        previous: `${fmt(prev)} (previous month)`,
+        ...d,
+        lastUpdated: formatRefreshed(),
+        action,
+      }}
+    >
+      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card hover:shadow-sm transition-shadow">
+        <div className={cn("absolute inset-y-0 left-0 w-1", toneStrip[tone])} />
+        <div className="pl-4 pr-3 py-3 grid grid-cols-12 items-center gap-3">
+          <div className="col-span-12 sm:col-span-5 flex items-center gap-3 min-w-0">
+            <div className={cn(toneIcon[tone], "h-9 w-9 shrink-0")}>
+              <span className="relative z-10 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
             </div>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span
-                className={cn("text-lg font-bold tabular-nums leading-none", toneText[tone])}
-              >
-                {value}
-              </span>
-              {sublabel && (
-                <span className="text-[10px] text-muted-foreground truncate">{sublabel}</span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground truncate">
+                {label}
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span
+                  className={cn("text-lg font-bold tabular-nums leading-none", toneText[tone])}
+                >
+                  {value}
+                </span>
+                {sublabel && (
+                  <span className="text-[10px] text-muted-foreground truncate">{sublabel}</span>
+                )}
+              </div>
+              {warning ? (
+                <div className="mt-1 text-[10px] font-semibold text-warning truncate">{warning}</div>
+              ) : (
+                <div
+                  className={cn(
+                    "mt-1 text-[10px] font-semibold tabular-nums",
+                    good ? "text-success" : "text-danger",
+                  )}
+                >
+                  {up ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(1)}% vs 12 mo ago
+                </div>
               )}
             </div>
-            {warning ? (
-              <div className="mt-1 text-[10px] font-semibold text-warning truncate">{warning}</div>
-            ) : (
-              <div
-                className={cn(
-                  "mt-1 text-[10px] font-semibold tabular-nums",
-                  good ? "text-success" : "text-danger",
-                )}
-              >
-                {up ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(1)}% vs 12 mo ago
-              </div>
-            )}
+          </div>
+          <div className="col-span-12 sm:col-span-7 h-16">
+            <Sparkwave
+              data={trend}
+              tone={tone}
+              target={target}
+              formatValue={formatValue}
+              gradientId={`spark-${id}`}
+            />
           </div>
         </div>
-        <div className="col-span-12 sm:col-span-7 h-16">
-          <Sparkwave
-            data={trend}
-            tone={tone}
-            target={target}
-            formatValue={formatValue}
-            gradientId={`spark-${id}`}
-          />
-        </div>
       </div>
-    </div>
+    </KpiTooltip>
   );
 }
+
 
 export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
   const k = computeKpis(data);
@@ -149,6 +177,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<GraduationCap />}
           tone="primary"
           trend={t.assigned}
+          definition="Every training assignment in the current filter scope, regardless of status."
+          formula="COUNT(all training assignments in scope)"
+          action="Click to view all assignments by course and category."
         />
         <WaveRow
           id="completed"
@@ -158,6 +189,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<CheckCircle2 />}
           tone="success"
           trend={t.completed}
+          definition="Assignments marked Completed in the LMS within the current scope."
+          formula="COUNT(assignments WHERE status = 'Completed')"
+          action="Click to view completions by month and department."
         />
         <WaveRow
           id="rate"
@@ -167,7 +201,11 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           tone="info"
           target={80}
           trend={t.completionRate}
+          unit="%"
           formatValue={(v) => `${v.toFixed(1)}%`}
+          definition="Share of assigned trainings that have been completed. Target: 80%."
+          formula="Completed Assignments ÷ Total Assigned × 100"
+          action="Click to drill down into learner details."
           warning={
             k.completionRate < 80
               ? `${(80 - k.completionRate).toFixed(1)} pts below 80% target`
@@ -182,6 +220,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<AlertTriangle />}
           tone="danger"
           trend={t.overdue}
+          definition="Assignments past their due date that are still not completed."
+          formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
+          action="Click to view overdue learners and send nudges."
           warning={k.overdueCount > 50 ? "Critical volume" : undefined}
         />
         <WaveRow
@@ -192,7 +233,12 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           tone="warning"
           target={80}
           trend={t.mandatoryCompliance}
+          unit="%"
           formatValue={(v) => `${v.toFixed(1)}%`}
+          definition="Completion rate limited to Mandatory (compliance) trainings. Target: 80%."
+          formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
+          action="Click to view employees with open mandatory training."
+
           warning={
             k.mandatoryComplianceRate < 80
               ? `${(80 - k.mandatoryComplianceRate).toFixed(1)} pts below 80% target`
