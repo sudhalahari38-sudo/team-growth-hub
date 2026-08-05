@@ -26,10 +26,13 @@ import {
   isOverdue,
   daysOverdue,
   monthlyCompletionTrend,
+  executiveMetricTrends,
   TODAY,
   trafficLight,
   lightClasses,
 } from "@/lib/training-analytics";
+import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
+
 
 /* -------------------------------- KPI strip ------------------------------- */
 
