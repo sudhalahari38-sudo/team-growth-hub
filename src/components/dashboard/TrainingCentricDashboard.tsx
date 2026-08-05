@@ -874,7 +874,6 @@ function TrainingDetail({
         />
       </div>
 
-      </div>
 
       {/* Feedback + Forecast side panel */}
       <div className="flex flex-col gap-3">
