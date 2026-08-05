@@ -778,6 +778,8 @@ function TrainingDetail({
   data: TrainingRecord[];
   feedback: FeedbackRecord[];
 }) {
+  const [nudgeTarget, setNudgeTarget] = useState<NudgeTarget | null>(null);
+
   const completed = data.filter((r) => r.status === "Completed").length;
   const target = Math.ceil(data.length * 0.8);
   const additionalNeeded = Math.max(0, target - completed);
