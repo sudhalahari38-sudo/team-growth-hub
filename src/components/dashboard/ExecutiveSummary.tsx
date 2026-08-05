@@ -10,6 +10,8 @@ import {
   Activity,
 } from "lucide-react";
 import { Sparkwave } from "./Sparkwave";
+import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
+
 import { cn } from "@/lib/utils";
 import type { MetricPoint } from "@/lib/training-analytics";
 
