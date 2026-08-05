@@ -32,6 +32,8 @@ import {
   lightClasses,
 } from "@/lib/training-analytics";
 import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
+import { NudgeDialog, type NudgeTarget } from "./NudgeDialog";
+
 
 
 /* -------------------------------- KPI strip ------------------------------- */
