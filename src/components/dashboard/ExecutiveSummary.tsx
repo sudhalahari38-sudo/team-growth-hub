@@ -48,6 +48,10 @@ function WaveRow({
   trend,
   target,
   formatValue,
+  definition,
+  formula,
+  action,
+  unit = "",
 }: {
   id: string;
   label: string;
@@ -59,6 +63,10 @@ function WaveRow({
   trend: MetricPoint[];
   target?: number;
   formatValue?: (v: number) => string;
+  definition: string;
+  formula: string;
+  action?: string;
+  unit?: string;
 }) {
   const first = trend[0]?.value ?? 0;
   const last = trend[trend.length - 1]?.value ?? 0;
@@ -68,55 +76,73 @@ function WaveRow({
   const positiveIsGood = tone !== "danger";
   const good = positiveIsGood ? up : !up;
 
+  const prev = trend[trend.length - 2]?.value ?? first;
+  const fmt = formatValue ?? ((v: number) => v.toLocaleString());
+  const d = deltaInfo(last, prev, positiveIsGood, unit);
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card hover:shadow-sm transition-shadow">
-      <div className={cn("absolute inset-y-0 left-0 w-1", toneStrip[tone])} />
-      <div className="pl-4 pr-3 py-3 grid grid-cols-12 items-center gap-3">
-        <div className="col-span-12 sm:col-span-5 flex items-center gap-3 min-w-0">
-          <div className={cn(toneIcon[tone], "h-9 w-9 shrink-0")}>
-            <span className="relative z-10 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground truncate">
-              {label}
+    <KpiTooltip
+      info={{
+        title: label,
+        definition,
+        formula,
+        current: value,
+        previous: `${fmt(prev)} (previous month)`,
+        ...d,
+        lastUpdated: formatRefreshed(),
+        action,
+      }}
+    >
+      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card hover:shadow-sm transition-shadow">
+        <div className={cn("absolute inset-y-0 left-0 w-1", toneStrip[tone])} />
+        <div className="pl-4 pr-3 py-3 grid grid-cols-12 items-center gap-3">
+          <div className="col-span-12 sm:col-span-5 flex items-center gap-3 min-w-0">
+            <div className={cn(toneIcon[tone], "h-9 w-9 shrink-0")}>
+              <span className="relative z-10 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
             </div>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span
-                className={cn("text-lg font-bold tabular-nums leading-none", toneText[tone])}
-              >
-                {value}
-              </span>
-              {sublabel && (
-                <span className="text-[10px] text-muted-foreground truncate">{sublabel}</span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground truncate">
+                {label}
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span
+                  className={cn("text-lg font-bold tabular-nums leading-none", toneText[tone])}
+                >
+                  {value}
+                </span>
+                {sublabel && (
+                  <span className="text-[10px] text-muted-foreground truncate">{sublabel}</span>
+                )}
+              </div>
+              {warning ? (
+                <div className="mt-1 text-[10px] font-semibold text-warning truncate">{warning}</div>
+              ) : (
+                <div
+                  className={cn(
+                    "mt-1 text-[10px] font-semibold tabular-nums",
+                    good ? "text-success" : "text-danger",
+                  )}
+                >
+                  {up ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(1)}% vs 12 mo ago
+                </div>
               )}
             </div>
-            {warning ? (
-              <div className="mt-1 text-[10px] font-semibold text-warning truncate">{warning}</div>
-            ) : (
-              <div
-                className={cn(
-                  "mt-1 text-[10px] font-semibold tabular-nums",
-                  good ? "text-success" : "text-danger",
-                )}
-              >
-                {up ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(1)}% vs 12 mo ago
-              </div>
-            )}
+          </div>
+          <div className="col-span-12 sm:col-span-7 h-16">
+            <Sparkwave
+              data={trend}
+              tone={tone}
+              target={target}
+              formatValue={formatValue}
+              gradientId={`spark-${id}`}
+            />
           </div>
         </div>
-        <div className="col-span-12 sm:col-span-7 h-16">
-          <Sparkwave
-            data={trend}
-            tone={tone}
-            target={target}
-            formatValue={formatValue}
-            gradientId={`spark-${id}`}
-          />
-        </div>
       </div>
-    </div>
+    </KpiTooltip>
   );
 }
+
 
 export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
   const k = computeKpis(data);
