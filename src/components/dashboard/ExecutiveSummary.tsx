@@ -177,6 +177,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<GraduationCap />}
           tone="primary"
           trend={t.assigned}
+          definition="Every training assignment in the current filter scope, regardless of status."
+          formula="COUNT(all training assignments in scope)"
+          action="Click to view all assignments by course and category."
         />
         <WaveRow
           id="completed"
@@ -186,6 +189,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<CheckCircle2 />}
           tone="success"
           trend={t.completed}
+          definition="Assignments marked Completed in the LMS within the current scope."
+          formula="COUNT(assignments WHERE status = 'Completed')"
+          action="Click to view completions by month and department."
         />
         <WaveRow
           id="rate"
@@ -195,7 +201,11 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           tone="info"
           target={80}
           trend={t.completionRate}
+          unit="%"
           formatValue={(v) => `${v.toFixed(1)}%`}
+          definition="Share of assigned trainings that have been completed. Target: 80%."
+          formula="Completed Assignments ÷ Total Assigned × 100"
+          action="Click to drill down into learner details."
           warning={
             k.completionRate < 80
               ? `${(80 - k.completionRate).toFixed(1)} pts below 80% target`
@@ -210,6 +220,9 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           icon={<AlertTriangle />}
           tone="danger"
           trend={t.overdue}
+          definition="Assignments past their due date that are still not completed."
+          formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
+          action="Click to view overdue learners and send nudges."
           warning={k.overdueCount > 50 ? "Critical volume" : undefined}
         />
         <WaveRow
@@ -220,7 +233,12 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           tone="warning"
           target={80}
           trend={t.mandatoryCompliance}
+          unit="%"
           formatValue={(v) => `${v.toFixed(1)}%`}
+          definition="Completion rate limited to Mandatory (compliance) trainings. Target: 80%."
+          formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
+          action="Click to view employees with open mandatory training."
+
           warning={
             k.mandatoryComplianceRate < 80
               ? `${(80 - k.mandatoryComplianceRate).toFixed(1)} pts below 80% target`
