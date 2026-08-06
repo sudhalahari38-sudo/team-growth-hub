@@ -20,10 +20,21 @@
  *     using (manager_name = current_setting('app.user.manager', true)
  *            or public.has_role(auth.uid(), 'leadership'));
  */
+export type TrainingModality = "Instructor-led" | "Virtual" | "eLearning" | "Blended";
+
+export const MODALITIES: TrainingModality[] = [
+  "Instructor-led",
+  "Virtual",
+  "eLearning",
+  "Blended",
+];
+
 export interface FeedbackRecord {
   id: string;
   employeeName: string;
   managerName: string;
+  department: string;
+  modality: TrainingModality;
   courseName: string;
   trainerName: string;
   rating: 1 | 2 | 3 | 4 | 5;

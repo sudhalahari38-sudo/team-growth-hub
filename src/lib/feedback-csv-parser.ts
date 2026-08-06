@@ -1,9 +1,11 @@
 import Papa from "papaparse";
-import type { FeedbackRecord } from "./feedback-types";
+import { MODALITIES, type FeedbackRecord, type TrainingModality } from "./feedback-types";
 
 const ALIASES: Record<keyof Omit<FeedbackRecord, "id">, string[]> = {
   employeeName: ["employee name", "employee", "learner"],
   managerName: ["manager name", "manager"],
+  department: ["department", "dept", "business unit"],
+  modality: ["modality", "delivery", "delivery method", "format"],
   courseName: ["course name", "course", "title"],
   trainerName: ["trainer name", "trainer", "instructor"],
   rating: ["rating", "score", "stars"],
@@ -55,6 +57,11 @@ export function parseFeedbackCsv(csv: string): FeedbackParseResult {
       id: `FB${i + 1}`,
       employeeName: get("employeeName").trim(),
       managerName: get("managerName").trim() || "Unassigned",
+      department: get("department").trim() || "Unassigned",
+      modality:
+        (MODALITIES.find(
+          (m) => m.toLowerCase() === get("modality").trim().toLowerCase(),
+        ) as TrainingModality) ?? "eLearning",
       courseName: get("courseName").trim(),
       trainerName: get("trainerName").trim(),
       rating: ratingNum as 1 | 2 | 3 | 4 | 5,
@@ -66,8 +73,8 @@ export function parseFeedbackCsv(csv: string): FeedbackParseResult {
   return { records, errors: [] };
 }
 
-export const SAMPLE_FEEDBACK_CSV = `Employee Name,Manager Name,Course Name,Trainer Name,Rating,Comments,Training Date
-Alex Patel,Aarti Sharma,Advanced TypeScript,Dr. Anika Rao,5,Excellent session very engaging,2026-02-28
-Sam Kim,Aarti Sharma,Data Privacy & GDPR,Marcus Bell,3,Decent content nothing exceptional,2026-03-12
-Priya Singh,Brian Cole,Kubernetes Fundamentals,Sofia Hernandez,4,Loved the hands-on exercises,2026-03-20
+export const SAMPLE_FEEDBACK_CSV = `Employee Name,Manager Name,Department,Modality,Course Name,Trainer Name,Rating,Comments,Training Date
+Alex Patel,Aarti Sharma,Engineering,Virtual,Advanced TypeScript,Dr. Anika Rao,5,Excellent session very engaging,2026-02-28
+Sam Kim,Aarti Sharma,Engineering,eLearning,Data Privacy & GDPR,Marcus Bell,3,Decent content nothing exceptional,2026-03-12
+Priya Singh,Brian Cole,Sales,Instructor-led,Kubernetes Fundamentals,Sofia Hernandez,4,Loved the hands-on exercises,2026-03-20
 `;

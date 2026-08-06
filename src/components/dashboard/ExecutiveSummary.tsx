@@ -4,11 +4,11 @@ import { computeKpis, executiveMetricTrends } from "@/lib/training-analytics";
 import {
   GraduationCap,
   CheckCircle2,
-  TrendingUp,
   AlertTriangle,
   ShieldCheck,
   Activity,
 } from "lucide-react";
+
 import { Sparkwave } from "./Sparkwave";
 import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
 
@@ -182,28 +182,17 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           action="Click to view all assignments by course and category."
         />
         <WaveRow
-          id="completed"
-          label="Completed"
-          value={k.completed.toLocaleString()}
-          sublabel={`of ${k.totalAssigned.toLocaleString()}`}
+          id="rate"
+          label="Completed / Completion Rate"
+          value={`${k.completionRate.toFixed(1)}%`}
+          sublabel={`${k.completed.toLocaleString()} of ${k.totalAssigned.toLocaleString()} completed`}
           icon={<CheckCircle2 />}
           tone="success"
-          trend={t.completed}
-          definition="Assignments marked Completed in the LMS within the current scope."
-          formula="COUNT(assignments WHERE status = 'Completed')"
-          action="Click to view completions by month and department."
-        />
-        <WaveRow
-          id="rate"
-          label="Completion Rate"
-          value={`${k.completionRate.toFixed(1)}%`}
-          icon={<TrendingUp />}
-          tone="info"
           target={80}
           trend={t.completionRate}
           unit="%"
           formatValue={(v) => `${v.toFixed(1)}%`}
-          definition="Share of assigned trainings that have been completed. Target: 80%."
+          definition="Completed trainings and the share of assigned trainings completed. Target: 80%."
           formula="Completed Assignments ÷ Total Assigned × 100"
           action="Click to drill down into learner details."
           warning={
@@ -212,6 +201,7 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
               : undefined
           }
         />
+
         <WaveRow
           id="overdue"
           label="Overdue"

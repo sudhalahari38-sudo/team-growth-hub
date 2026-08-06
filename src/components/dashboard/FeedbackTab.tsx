@@ -41,9 +41,17 @@ import {
 } from "@/lib/feedback-csv-parser";
 import {
   sentimentOf,
+  MODALITIES,
   type FeedbackRecord,
   type Sentiment,
 } from "@/lib/feedback-types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
 import {
@@ -114,6 +122,38 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
   const { settings } = useDashboardSettings();
   const transcriptEnabled = settings.transcriptEnabled;
   const [viewing, setViewing] = useState<FeedbackRecord | null>(null);
+  const [fb, setFb] = useState({
+    course: "all",
+    department: "all",
+    learner: "all",
+    manager: "all",
+    modality: "all",
+  });
+
+  const uniq = (vals: string[]) => Array.from(new Set(vals.filter(Boolean))).sort();
+  const options = useMemo(
+    () => ({
+      course: uniq(data.map((d) => d.courseName)),
+      department: uniq(data.map((d) => d.department)),
+      learner: uniq(data.map((d) => d.employeeName)),
+      manager: uniq(data.map((d) => d.managerName)),
+      modality: MODALITIES as unknown as string[],
+    }),
+    [data],
+  );
+
+  const rows = useMemo(
+    () =>
+      data.filter(
+        (d) =>
+          (fb.course === "all" || d.courseName === fb.course) &&
+          (fb.department === "all" || d.department === fb.department) &&
+          (fb.learner === "all" || d.employeeName === fb.learner) &&
+          (fb.manager === "all" || d.managerName === fb.manager) &&
+          (fb.modality === "all" || d.modality === fb.modality),
+      ),
+    [data, fb],
+  );
 
   const downloadTranscript = (r: FeedbackRecord) => {
     const blob = new Blob([buildTranscript(r)], { type: "text/plain" });
@@ -125,11 +165,11 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
     URL.revokeObjectURL(url);
   };
 
-  const overall = useMemo(() => avg(data.map((d) => d.rating)), [data]);
+  const overall = useMemo(() => avg(rows.map((d) => d.rating)), [rows]);
 
   const byCourse = useMemo(() => {
     const m = new Map<string, number[]>();
-    for (const r of data) {
+    for (const r of rows) {
       const arr = m.get(r.courseName) ?? [];
       arr.push(r.rating);
       m.set(r.courseName, arr);
@@ -142,28 +182,12 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
       }))
       .sort((a, b) => b.avg - a.avg)
       .slice(0, 10);
-  }, [data]);
-
-  const byTrainer = useMemo(() => {
-    const m = new Map<string, number[]>();
-    for (const r of data) {
-      const arr = m.get(r.trainerName) ?? [];
-      arr.push(r.rating);
-      m.set(r.trainerName, arr);
-    }
-    return Array.from(m.entries())
-      .map(([trainer, ratings]) => ({
-        trainer,
-        avg: Number(avg(ratings).toFixed(2)),
-        count: ratings.length,
-      }))
-      .sort((a, b) => b.avg - a.avg);
-  }, [data]);
+  }, [rows]);
 
   const sentiment = useMemo(() => {
     const counts: Record<Sentiment, number> = { positive: 0, neutral: 0, negative: 0 };
-    for (const r of data) counts[sentimentOf(r.rating, r.comments)]++;
-    const total = data.length || 1;
+    for (const r of rows) counts[sentimentOf(r.rating, r.comments)]++;
+    const total = rows.length || 1;
     return {
       counts,
       pct: {
@@ -172,7 +196,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
         negative: Math.round((counts.negative / total) * 100),
       },
     };
-  }, [data]);
+  }, [rows]);
 
   const handleFile = async (file: File) => {
     const text = await file.text();
@@ -258,6 +282,39 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
       </div>
       )}
 
+      {/* Filters */}
+      <div className="rounded-2xl border border-border/70 bg-card shadow-sm px-4 py-3 grid grid-cols-2 md:grid-cols-5 gap-2">
+        {([
+          ["course", "Course", "All courses"],
+          ["department", "Department", "All departments"],
+          ["learner", "Learner", "All learners"],
+          ["manager", "Manager", "All managers"],
+          ["modality", "Modality", "All modalities"],
+        ] as const).map(([key, label, allLabel]) => (
+          <div key={key} className="flex flex-col gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              {label}
+            </span>
+            <Select
+              value={fb[key]}
+              onValueChange={(v) => setFb((p) => ({ ...p, [key]: v }))}
+            >
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue placeholder={allLabel} />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">{allLabel}</SelectItem>
+                {options[key].map((o) => (
+                  <SelectItem key={o} value={o}>
+                    {o}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
+
       {/* KPI strip */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 border-border/70 shadow-sm bg-gradient-card">
@@ -312,7 +369,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
       </section>
 
       {/* Charts */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 gap-4">
         <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm bg-gradient-card">
           <div className="flex items-start gap-3">
             <div className="icon-3d icon-3d-info h-10 w-10 shrink-0">
@@ -342,35 +399,6 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
             </ResponsiveContainer>
           </div>
         </Card>
-        <Card className="p-6 flex flex-col gap-5 border-border/70 shadow-sm bg-gradient-card">
-          <div className="flex items-start gap-3">
-            <div className="icon-3d icon-3d-brand h-10 w-10 shrink-0">
-              <MessageSquareHeart className="h-5 w-5 relative z-10" />
-            </div>
-            <div>
-              <h3 className="font-semibold tracking-tight">Trainer Performance</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Average rating per trainer</p>
-            </div>
-          </div>
-          <div className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byTrainer} margin={{ top: 10, right: 10, left: -10, bottom: 30 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="trainer" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} angle={-25} textAnchor="end" interval={0} height={60} />
-                <YAxis domain={[0, 5]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number, _n, p) => [`${v} ★ (${p.payload.count} responses)`, "Avg"]}
-                />
-                <Bar dataKey="avg" radius={[6, 6, 0, 0]}>
-                  {byTrainer.map((r, i) => (
-                    <Cell key={i} fill={ratingColor(r.avg)} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
       </section>
 
       {/* Raw feedback table */}
@@ -385,7 +413,7 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
               <p className="text-xs text-muted-foreground mt-0.5">Most recent feedback first</p>
             </div>
           </div>
-          <Badge variant="secondary">{data.length} entries</Badge>
+          <Badge variant="secondary">{rows.length} entries</Badge>
         </div>
         <div className="overflow-x-auto -mx-5">
           <Table>
@@ -394,14 +422,15 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
                 <TableHead>Date</TableHead>
                 <TableHead>Employee</TableHead>
                 <TableHead>Course</TableHead>
-                <TableHead>Trainer</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Modality</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Comment</TableHead>
                 {transcriptEnabled && <TableHead className="text-right">Transcript</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {[...data]
+              {[...rows]
                 .sort((a, b) => b.trainingDate.localeCompare(a.trainingDate))
                 .slice(0, page)
                 .map((r) => (
@@ -409,7 +438,8 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
                     <TableCell className="tabular-nums text-muted-foreground">{r.trainingDate}</TableCell>
                     <TableCell className="font-medium">{r.employeeName}</TableCell>
                     <TableCell>{r.courseName}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.trainerName}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.department}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.modality}</TableCell>
                     <TableCell>
                       <StarRow value={r.rating} />
                     </TableCell>
@@ -427,9 +457,9 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
                     )}
                   </TableRow>
                 ))}
-              {!data.length && (
+              {!rows.length && (
                 <TableRow>
-                  <TableCell colSpan={transcriptEnabled ? 7 : 6} className="text-center text-sm text-muted-foreground py-8">
+                  <TableCell colSpan={transcriptEnabled ? 8 : 7} className="text-center text-sm text-muted-foreground py-8">
                     No feedback for current view
                   </TableCell>
                 </TableRow>
@@ -437,10 +467,10 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
             </TableBody>
           </Table>
         </div>
-        {page < data.length && (
+        {page < rows.length && (
           <div className="flex justify-center">
             <Button variant="outline" size="sm" onClick={() => setPage(page + 15)}>
-              Show more ({data.length - page} remaining)
+              Show more ({rows.length - page} remaining)
             </Button>
           </div>
         )}

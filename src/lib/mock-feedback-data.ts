@@ -1,4 +1,4 @@
-import type { FeedbackRecord } from "./feedback-types";
+import { MODALITIES, type FeedbackRecord } from "./feedback-types";
 import type { TrainingRecord } from "./training-types";
 
 const trainers = [
@@ -61,6 +61,8 @@ export function generateMockFeedback(training: TrainingRecord[]): FeedbackRecord
       id: `FB${id++}`,
       employeeName: r.employeeName,
       managerName: r.managerName,
+      department: r.department,
+      modality: MODALITIES[Math.floor(rng() * MODALITIES.length)],
       courseName: r.courseName,
       trainerName: trainers[Math.floor(rng() * trainers.length)],
       rating,
