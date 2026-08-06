@@ -4,11 +4,11 @@ import { computeKpis, executiveMetricTrends } from "@/lib/training-analytics";
 import {
   GraduationCap,
   CheckCircle2,
-  TrendingUp,
   AlertTriangle,
   ShieldCheck,
   Activity,
 } from "lucide-react";
+
 import { Sparkwave } from "./Sparkwave";
 import { KpiTooltip, deltaInfo, formatRefreshed } from "./KpiTooltip";
 
