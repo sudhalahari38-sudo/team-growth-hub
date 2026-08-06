@@ -285,12 +285,12 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
       {/* Filters */}
       <div className="rounded-2xl border border-border/70 bg-card shadow-sm px-4 py-3 grid grid-cols-2 md:grid-cols-5 gap-2">
         {([
-          ["course", "Course"],
-          ["department", "Department"],
-          ["learner", "Learner"],
-          ["manager", "Manager"],
-          ["modality", "Modality"],
-        ] as const).map(([key, label]) => (
+          ["course", "Course", "All courses"],
+          ["department", "Department", "All departments"],
+          ["learner", "Learner", "All learners"],
+          ["manager", "Manager", "All managers"],
+          ["modality", "Modality", "All modalities"],
+        ] as const).map(([key, label, allLabel]) => (
           <div key={key} className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
               {label}
@@ -300,10 +300,10 @@ export function FeedbackTab({ data, isUsingMock, onLoad, onReset, hideControls }
               onValueChange={(v) => setFb((p) => ({ ...p, [key]: v }))}
             >
               <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder={`All ${label.toLowerCase()}s`} />
+                <SelectValue placeholder={allLabel} />
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="all">{`All ${label.toLowerCase()}s`}</SelectItem>
+                <SelectItem value="all">{allLabel}</SelectItem>
                 {options[key].map((o) => (
                   <SelectItem key={o} value={o}>
                     {o}
