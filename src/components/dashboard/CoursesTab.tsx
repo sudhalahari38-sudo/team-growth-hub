@@ -1,26 +1,58 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { TrainingRecord } from "@/lib/training-types";
 import { courseLevelAnalysis, trafficLight, lightClasses } from "@/lib/training-analytics";
 import { BookOpen, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type CourseSort = "most" | "least";
+
+const SORTS: { id: CourseSort; label: string }[] = [
+  { id: "most", label: "Most taken" },
+  { id: "least", label: "Least taken" },
+];
+
 export function CoursesTab({ data }: { data: TrainingRecord[] }) {
-  const rows = courseLevelAnalysis(data);
-  const struggling = rows.filter((r) => r.completionRate < 60).slice(0, 3);
+  const [sort, setSort] = useState<CourseSort>("most");
+  const base = courseLevelAnalysis(data);
+  const rows = [...base].sort((a, b) =>
+    sort === "most" ? b.assigned - a.assigned : a.assigned - b.assigned,
+  );
+  const struggling = base.filter((r) => r.completionRate < 60).slice(0, 3);
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3">
-        <div className="icon-3d icon-3d-info h-10 w-10">
-          <BookOpen className="h-5 w-5 relative z-10" />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="icon-3d icon-3d-info h-10 w-10">
+            <BookOpen className="h-5 w-5 relative z-10" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Course-Level Analysis</h2>
+            <p className="text-xs text-muted-foreground">
+              Completion rate, demand, and overdue load per course
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">Course-Level Analysis</h2>
-          <p className="text-xs text-muted-foreground">
-            Completion rate, demand, and overdue load per course
-          </p>
+        <div className="inline-flex rounded-lg border border-border bg-secondary p-0.5">
+          {SORTS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setSort(s.id)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                sort === s.id
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {rows.map((c) => {
