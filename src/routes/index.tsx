@@ -40,7 +40,6 @@ import { DashboardTabs, type DashboardView, defaultViewForRole, tabsForRole } fr
 import { RecommendedActions } from "@/components/dashboard/RecommendedActions";
 import { ManagerDrillDown } from "@/components/dashboard/ManagerDrillDown";
 import { CoursesTab } from "@/components/dashboard/CoursesTab";
-import { ForecastTab } from "@/components/dashboard/ForecastTab";
 import { FeedbackTab } from "@/components/dashboard/FeedbackTab";
 import { LeadershipDashboard } from "@/components/dashboard/LeadershipDashboard";
 import { TrainingCentricDashboard } from "@/components/dashboard/TrainingCentricDashboard";
@@ -483,7 +482,6 @@ function Dashboard() {
 
         {view === "courses" && <CoursesTab data={filtered} />}
 
-        {view === "forecast" && <ForecastTab data={filtered} />}
 
         {view === "feedback" && (
           <FeedbackTab
