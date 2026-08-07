@@ -54,6 +54,7 @@ function WaveRow({
   formula,
   action,
   unit = "",
+  onOpen,
 }: {
   id: string;
   label: string;
@@ -69,6 +70,7 @@ function WaveRow({
   formula: string;
   action?: string;
   unit?: string;
+  onOpen?: () => void;
 }) {
   const first = trend[0]?.value ?? 0;
   const last = trend[trend.length - 1]?.value ?? 0;
@@ -84,6 +86,8 @@ function WaveRow({
 
   return (
     <KpiTooltip
+      onActivate={onOpen}
+      className={onOpen ? "cursor-pointer" : undefined}
       info={{
         title: label,
         definition,
