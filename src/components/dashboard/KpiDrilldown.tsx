@@ -90,7 +90,7 @@ export function KpiDrilldown({
     <>
       <Dialog open onOpenChange={(v) => !v && onClose()}>
         <DialogContent
-          showCloseButton
+          
           className="max-w-none w-screen h-screen sm:max-w-none rounded-none border-0 p-0 gap-0 flex flex-col bg-background"
         >
           <DialogHeader className="px-6 py-4 border-b border-border/60 bg-card text-left space-y-1">
