@@ -15,7 +15,12 @@ import {
   MessageSquareHeart,
   Building2,
   PieChart as PieIcon,
+  Sparkles,
+  Timer,
+  UserX,
 } from "lucide-react";
+import { KPI_METRICS, type KpiMetric } from "@/lib/kpi-drilldown";
+import { KpiDrilldown } from "./KpiDrilldown";
 import type { TrainingRecord } from "@/lib/training-types";
 import type { FeedbackRecord } from "@/lib/feedback-types";
 import type { Identity } from "@/lib/current-user";
