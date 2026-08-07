@@ -1,12 +1,18 @@
+import { useMemo, useState } from "react";
 import type { TrainingRecord } from "@/lib/training-types";
 import { Card } from "@/components/ui/card";
 import { computeKpis, executiveMetricTrends } from "@/lib/training-analytics";
+import { KPI_METRICS, metricSeries, type KpiMetric } from "@/lib/kpi-drilldown";
+import { KpiDrilldown } from "./KpiDrilldown";
 import {
   GraduationCap,
   CheckCircle2,
   AlertTriangle,
   ShieldCheck,
   Activity,
+  UserX,
+  Sparkles,
+  Timer,
 } from "lucide-react";
 
 import { Sparkwave } from "./Sparkwave";
