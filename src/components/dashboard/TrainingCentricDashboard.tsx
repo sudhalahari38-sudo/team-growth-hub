@@ -69,6 +69,7 @@ function KpiTile({
   unit = "",
   currentNumber,
   action,
+  onOpen,
 }: {
   label: string;
   value: string | number;
@@ -82,6 +83,7 @@ function KpiTile({
   unit?: string;
   currentNumber?: number;
   action?: string;
+  onOpen?: () => void;
 }) {
   const cmp =
     previous !== undefined && currentNumber !== undefined
@@ -94,6 +96,8 @@ function KpiTile({
 
   return (
     <KpiTooltip
+      onActivate={onOpen}
+      className={onOpen ? "cursor-pointer" : undefined}
       info={{
         title: label,
         definition,
