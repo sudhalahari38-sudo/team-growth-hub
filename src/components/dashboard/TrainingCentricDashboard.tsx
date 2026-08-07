@@ -149,85 +149,135 @@ function KpiStrip({ data }: { data: TrainingRecord[] }) {
   const prevOf = (s: { value: number }[]) => s[s.length - 2]?.value;
   const inProgress = data.filter((r) => r.status === "In Progress").length;
   const notStarted = data.filter((r) => r.status === "Not Started").length;
+  const [drill, setDrill] = useState<KpiMetric | null>(null);
+
+  const optionalRate = KPI_METRICS.optional.value(data);
+  const avgDays = KPI_METRICS.avgDays.value(data);
+  const atRisk = KPI_METRICS.atRisk.value(data);
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      <KpiTile
-        label="Total Assigned"
-        value={k.totalAssigned.toLocaleString()}
-        sublabel="trainings"
-        icon={<BookOpen className="h-4 w-4" />}
-        tone="primary"
-        definition="Every training assignment in your current scope, regardless of status."
-        formula="COUNT(all training assignments in scope)"
-        currentNumber={k.totalAssigned}
-        previous={prevOf(t.assigned)}
-        action="Click to review all assigned trainings."
-      />
-      <KpiTile
-        label="In Progress"
-        value={inProgress.toLocaleString()}
-        sublabel={`${pct(inProgress, k.totalAssigned)}%`}
-        icon={<Clock className="h-4 w-4" />}
-        tone="info"
-        definition="Trainings started but not yet finished by the learner."
-        formula="COUNT(assignments WHERE status = 'In Progress')"
-        action="Click to view learners currently mid-course."
-      />
-      <KpiTile
-        label="Completed"
-        value={k.completed.toLocaleString()}
-        sublabel={`${k.completionRate.toFixed(1)}%`}
-        icon={<CheckCircle2 className="h-4 w-4" />}
-        tone="success"
-        definition="Assignments marked Completed in the LMS."
-        formula="COUNT(assignments WHERE status = 'Completed')"
-        currentNumber={k.completed}
-        previous={prevOf(t.completed)}
-        action="Click to view completions by course."
-      />
-      <KpiTile
-        label="Overdue"
-        value={k.overdueCount.toLocaleString()}
-        sublabel="need action"
-        icon={<AlertTriangle className="h-4 w-4" />}
-        tone="danger"
-        definition="Assignments past their due date and still incomplete."
-        formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
-        currentNumber={k.overdueCount}
-        previous={prevOf(t.overdue)}
-        higherIsBetter={false}
-        action="Click to view overdue learners and send nudges."
-      />
-      <KpiTile
-        label="Not Started"
-        value={notStarted.toLocaleString()}
-        sublabel={`${pct(notStarted, k.totalAssigned)}%`}
-        icon={<Circle className="h-4 w-4" />}
-        tone="muted"
-        definition="Assignments the learner has not opened yet."
-        formula="COUNT(assignments WHERE status = 'Not Started')"
-        action="Click to view learners yet to begin."
-      />
-      <KpiTile
-        label="Mandatory Compliance"
-        value={`${k.mandatoryComplianceRate.toFixed(1)}%`}
-        sublabel="target 80%"
-        icon={<ShieldCheck className="h-4 w-4" />}
-        definition="Completion rate for Mandatory (compliance) trainings only. Target: 80%."
-        formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
-        currentNumber={k.mandatoryComplianceRate}
-        previous={prevOf(t.mandatoryCompliance)}
-        unit="%"
-        action="Click to view employees with open mandatory training."
-        tone={
-          k.mandatoryComplianceRate >= 80
-            ? "success"
-            : k.mandatoryComplianceRate >= 60
-            ? "warning"
-            : "danger"
-        }
-      />
-    </div>
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <KpiTile
+          label="Total Assigned"
+          value={k.totalAssigned.toLocaleString()}
+          sublabel="trainings"
+          icon={<BookOpen className="h-4 w-4" />}
+          tone="primary"
+          definition="Every training assignment in your current scope, regardless of status."
+          formula="COUNT(all training assignments in scope)"
+          currentNumber={k.totalAssigned}
+          previous={prevOf(t.assigned)}
+          action="Click to review all assigned trainings."
+          onOpen={() => setDrill("assigned")}
+        />
+        <KpiTile
+          label="In Progress"
+          value={inProgress.toLocaleString()}
+          sublabel={`${pct(inProgress, k.totalAssigned)}%`}
+          icon={<Clock className="h-4 w-4" />}
+          tone="info"
+          definition="Trainings started but not yet finished by the learner."
+          formula="COUNT(assignments WHERE status = 'In Progress')"
+          action="Click to view learners currently mid-course."
+          onOpen={() => setDrill("inProgress")}
+        />
+        <KpiTile
+          label="Completed"
+          value={k.completed.toLocaleString()}
+          sublabel={`${k.completionRate.toFixed(1)}%`}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          tone="success"
+          definition="Assignments marked Completed in the LMS."
+          formula="COUNT(assignments WHERE status = 'Completed')"
+          currentNumber={k.completed}
+          previous={prevOf(t.completed)}
+          action="Click to view completions by course."
+          onOpen={() => setDrill("completionRate")}
+        />
+        <KpiTile
+          label="Overdue"
+          value={k.overdueCount.toLocaleString()}
+          sublabel="need action"
+          icon={<AlertTriangle className="h-4 w-4" />}
+          tone="danger"
+          definition="Assignments past their due date and still incomplete."
+          formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
+          currentNumber={k.overdueCount}
+          previous={prevOf(t.overdue)}
+          higherIsBetter={false}
+          action="Click to view overdue learners and send nudges."
+          onOpen={() => setDrill("overdue")}
+        />
+        <KpiTile
+          label="Not Started"
+          value={notStarted.toLocaleString()}
+          sublabel={`${pct(notStarted, k.totalAssigned)}%`}
+          icon={<Circle className="h-4 w-4" />}
+          tone="muted"
+          definition="Assignments the learner has not opened yet."
+          formula="COUNT(assignments WHERE status = 'Not Started')"
+          action="Click to view learners yet to begin."
+          onOpen={() => setDrill("notStarted")}
+        />
+        <KpiTile
+          label="Mandatory Compliance"
+          value={`${k.mandatoryComplianceRate.toFixed(1)}%`}
+          sublabel="target 80%"
+          icon={<ShieldCheck className="h-4 w-4" />}
+          definition="Completion rate for Mandatory (compliance) trainings only. Target: 80%."
+          formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
+          currentNumber={k.mandatoryComplianceRate}
+          previous={prevOf(t.mandatoryCompliance)}
+          unit="%"
+          action="Click to view employees with open mandatory training."
+          onOpen={() => setDrill("mandatory")}
+          tone={
+            k.mandatoryComplianceRate >= 80
+              ? "success"
+              : k.mandatoryComplianceRate >= 60
+              ? "warning"
+              : "danger"
+          }
+        />
+        <KpiTile
+          label="Optional Completion"
+          value={`${optionalRate.toFixed(1)}%`}
+          sublabel="target 60%"
+          icon={<Sparkles className="h-4 w-4" />}
+          tone="info"
+          unit="%"
+          definition={KPI_METRICS.optional.definition}
+          formula={KPI_METRICS.optional.formula}
+          action="Click to see optional course uptake."
+          onOpen={() => setDrill("optional")}
+        />
+        <KpiTile
+          label="Avg Days to Complete"
+          value={`${avgDays.toFixed(1)}d`}
+          sublabel="assign → complete"
+          icon={<Timer className="h-4 w-4" />}
+          tone="primary"
+          definition={KPI_METRICS.avgDays.definition}
+          formula={KPI_METRICS.avgDays.formula}
+          action="Click to find the slowest courses."
+          onOpen={() => setDrill("avgDays")}
+        />
+        <KpiTile
+          label="At-Risk Learners"
+          value={atRisk.toLocaleString()}
+          sublabel="with overdue items"
+          icon={<UserX className="h-4 w-4" />}
+          tone="danger"
+          higherIsBetter={false}
+          definition={KPI_METRICS.atRisk.definition}
+          formula={KPI_METRICS.atRisk.formula}
+          action="Click to escalate the highest-risk learners."
+          onOpen={() => setDrill("atRisk")}
+        />
+      </div>
+      <KpiDrilldown metric={drill} data={data} onClose={() => setDrill(null)} />
+    </>
   );
 }
 
