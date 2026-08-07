@@ -153,6 +153,15 @@ function WaveRow({
 export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
   const k = computeKpis(data);
   const t = executiveMetricTrends(data);
+  const [drill, setDrill] = useState<KpiMetric | null>(null);
+
+  const optional = KPI_METRICS.optional.value(data);
+  const avgDays = KPI_METRICS.avgDays.value(data);
+  const atRisk = KPI_METRICS.atRisk.value(data);
+
+  const optionalTrend = useMemo(() => metricSeries(data, "optional"), [data]);
+  const avgDaysTrend = useMemo(() => metricSeries(data, "avgDays"), [data]);
+  const atRiskTrend = useMemo(() => metricSeries(data, "atRisk"), [data]);
 
   return (
     <Card className="p-5 border-border/70 shadow-sm bg-gradient-card">
@@ -166,7 +175,7 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
               Executive Summary
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Key metrics shown as 12-month waveforms — trend & current value at a glance
+              12-month waveforms — hover for detail, click any KPI to drill down
             </p>
           </div>
         </div>
@@ -184,6 +193,7 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           definition="Every training assignment in the current filter scope, regardless of status."
           formula="COUNT(all training assignments in scope)"
           action="Click to view all assignments by course and category."
+          onOpen={() => setDrill("assigned")}
         />
         <WaveRow
           id="rate"
@@ -199,6 +209,7 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           definition="Completed trainings and the share of assigned trainings completed. Target: 80%."
           formula="Completed Assignments ÷ Total Assigned × 100"
           action="Click to drill down into learner details."
+          onOpen={() => setDrill("completionRate")}
           warning={
             k.completionRate < 80
               ? `${(80 - k.completionRate).toFixed(1)} pts below 80% target`
@@ -217,12 +228,27 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           definition="Assignments past their due date that are still not completed."
           formula="COUNT(assignments WHERE due date < today AND status ≠ 'Completed')"
           action="Click to view overdue learners and send nudges."
+          onOpen={() => setDrill("overdue")}
           warning={k.overdueCount > 50 ? "Critical volume" : undefined}
+        />
+        <WaveRow
+          id="atRisk"
+          label="At-Risk Learners"
+          value={atRisk.toLocaleString()}
+          sublabel="with overdue training"
+          icon={<UserX />}
+          tone="danger"
+          trend={atRiskTrend}
+          definition={KPI_METRICS.atRisk.definition}
+          formula={KPI_METRICS.atRisk.formula}
+          action="Click to see who to escalate first."
+          onOpen={() => setDrill("atRisk")}
         />
         <WaveRow
           id="mandatory"
           label="Mandatory Compliance"
           value={`${k.mandatoryComplianceRate.toFixed(1)}%`}
+          sublabel="mandatory trainings"
           icon={<ShieldCheck />}
           tone="warning"
           target={80}
@@ -232,14 +258,47 @@ export function ExecutiveSummary({ data }: { data: TrainingRecord[] }) {
           definition="Completion rate limited to Mandatory (compliance) trainings. Target: 80%."
           formula="Completed Mandatory ÷ Total Mandatory Assigned × 100"
           action="Click to view employees with open mandatory training."
-
+          onOpen={() => setDrill("mandatory")}
           warning={
             k.mandatoryComplianceRate < 80
               ? `${(80 - k.mandatoryComplianceRate).toFixed(1)} pts below 80% target`
               : undefined
           }
         />
+        <WaveRow
+          id="optional"
+          label="Optional Completion"
+          value={`${optional.toFixed(1)}%`}
+          sublabel="development courses"
+          icon={<Sparkles />}
+          tone="info"
+          target={60}
+          trend={optionalTrend}
+          unit="%"
+          formatValue={(v) => `${v.toFixed(1)}%`}
+          definition={KPI_METRICS.optional.definition}
+          formula={KPI_METRICS.optional.formula}
+          action="Click to see optional course uptake by team."
+          onOpen={() => setDrill("optional")}
+        />
+        <WaveRow
+          id="avgDays"
+          label="Avg Days to Complete"
+          value={`${avgDays.toFixed(1)}d`}
+          sublabel="assign → complete"
+          icon={<Timer />}
+          tone="primary"
+          trend={avgDaysTrend}
+          unit="d"
+          formatValue={(v) => `${v.toFixed(1)}d`}
+          definition={KPI_METRICS.avgDays.definition}
+          formula={KPI_METRICS.avgDays.formula}
+          action="Click to find the slowest courses and teams."
+          onOpen={() => setDrill("avgDays")}
+        />
       </div>
+
+      <KpiDrilldown metric={drill} data={data} onClose={() => setDrill(null)} />
     </Card>
   );
 }
