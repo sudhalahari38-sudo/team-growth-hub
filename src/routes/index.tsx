@@ -30,6 +30,12 @@ import {
   type Identity,
   type IdentityRole,
 } from "@/lib/current-user";
+import {
+  filterByTeamLevel,
+  reportingLine,
+  teamRows,
+  type TeamLevel,
+} from "@/lib/org-hierarchy";
 
 // KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
