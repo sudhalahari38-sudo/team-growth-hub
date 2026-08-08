@@ -15,6 +15,7 @@
  * based on the selected identity.
  */
 import type { TrainingRecord } from "./training-types";
+import { teamRows } from "./org-hierarchy";
 
 export type IdentityRole = "admin" | "leadership" | "manager";
 
@@ -83,7 +84,7 @@ export function applyRls<T extends { managerName: string }>(
   identity: Identity,
 ): T[] {
   if (canViewOrg(identity)) return rows;
-  return rows.filter((r) => r.managerName === identity.managerName);
+  return teamRows(rows, identity.managerName);
 }
 
 /* ----------------------------- Accounts & login ---------------------------- */

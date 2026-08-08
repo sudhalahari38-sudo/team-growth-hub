@@ -30,6 +30,12 @@ import {
   type Identity,
   type IdentityRole,
 } from "@/lib/current-user";
+import {
+  filterByTeamLevel,
+  reportingLine,
+  teamRows,
+  type TeamLevel,
+} from "@/lib/org-hierarchy";
 
 // KpiCard no longer used on overview
 import { ControlPanel } from "@/components/dashboard/ControlPanel";
@@ -84,6 +90,8 @@ function Dashboard() {
   const [impersonatedManager, setImpersonatedManager] = useState<string>("");
   /** Manager view scope: own reporting hierarchy vs read-only org-wide */
   const [teamScope, setTeamScope] = useState<"team" | "org">("team");
+  /** Within "My team": all, direct-only, or indirect-only reportees */
+  const [teamLevel, setTeamLevel] = useState<TeamLevel>("all");
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
@@ -120,17 +128,32 @@ function Dashboard() {
   const orgReadOnly = isManagerView && teamScope === "org";
 
   // RLS gate: manager view sees own team; "Organization" scope is read-only org-wide
-  const visibleData = useMemo(
+  const teamData = useMemo(
     () => (orgReadOnly ? data : applyRls(data, identity)),
     [data, identity, orgReadOnly],
   );
-  const visibleFeedback = useMemo(
+
+  // Direct vs indirect split within "My team"
+  const teamCounts = useMemo(() => {
+    const leader = identity.managerName;
+    const direct = teamData.filter((r) => reportingLine(r, leader) === "direct");
+    const indirect = teamData.filter((r) => reportingLine(r, leader) === "indirect");
+    return { all: teamData.length, direct: direct.length, indirect: indirect.length };
+  }, [teamData, identity.managerName]);
+
+  const visibleData = useMemo(
     () =>
-      isOrg || orgReadOnly
-        ? feedback
-        : feedback.filter((f) => f.managerName === identity.managerName),
-    [feedback, identity, isOrg, orgReadOnly],
+      isManagerView && !orgReadOnly
+        ? filterByTeamLevel(teamData, identity.managerName, teamLevel)
+        : teamData,
+    [teamData, identity.managerName, isManagerView, orgReadOnly, teamLevel],
   );
+
+  const visibleFeedback = useMemo(() => {
+    if (isOrg || orgReadOnly) return feedback;
+    const team = teamRows(feedback, identity.managerName);
+    return filterByTeamLevel(team, identity.managerName, teamLevel);
+  }, [feedback, identity, isOrg, orgReadOnly, teamLevel]);
 
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
@@ -414,10 +437,41 @@ function Dashboard() {
                 </button>
               ))}
             </div>
+
+            {teamScope === "team" && (
+              <div className="inline-flex rounded-lg border border-border bg-secondary p-0.5">
+                {(
+                  [
+                    ["all", `All (${teamCounts.all})`],
+                    ["direct", `Direct (${teamCounts.direct})`],
+                    ["indirect", `Indirect (${teamCounts.indirect})`],
+                  ] as const
+                ).map(([lvl, lbl]) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setTeamLevel(lvl)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                      teamLevel === lvl
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <span className="text-[11px] text-muted-foreground">
-              {teamScope === "team"
-                ? `Direct & indirect reportees of ${identity.managerName}`
-                : "Organization-wide training data · read-only"}
+              {teamScope === "org"
+                ? "Organization-wide training data · read-only"
+                : teamLevel === "direct"
+                  ? `Employees reporting directly to ${identity.managerName}`
+                  : teamLevel === "indirect"
+                    ? `Employees under ${identity.managerName}'s reporting managers`
+                    : `Direct & indirect reportees of ${identity.managerName}`}
             </span>
           </div>
         )}
