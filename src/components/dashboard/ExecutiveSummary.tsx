@@ -90,6 +90,32 @@ function WaveRow({
   const fmt = formatValue ?? ((v: number) => v.toLocaleString());
   const d = deltaInfo(last, prev, positiveIsGood, unit);
 
+  const values = trend.map((p) => p.value);
+  const max = values.length ? Math.max(...values) : 0;
+  const min = values.length ? Math.min(...values) : 0;
+  const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const bestMonth = trend.find((p) => p.value === (positiveIsGood ? max : min))?.label ?? "—";
+  const worstMonth = trend.find((p) => p.value === (positiveIsGood ? min : max))?.label ?? "—";
+  const vsAvg = avg ? ((last - avg) / Math.abs(avg)) * 100 : 0;
+
+  const stats = [
+    { label: "12-mo average", value: fmt(avg) },
+    { label: "vs average", value: `${vsAvg >= 0 ? "+" : ""}${vsAvg.toFixed(1)}%` },
+    { label: "12-mo high", value: fmt(max) },
+    { label: "12-mo low", value: fmt(min) },
+    { label: positiveIsGood ? "Best month" : "Lowest month", value: bestMonth },
+    { label: positiveIsGood ? "Weakest month" : "Peak month", value: worstMonth },
+    ...(target !== undefined
+      ? [
+          { label: "Target", value: fmt(target) },
+          {
+            label: last >= target ? "Above target by" : "Gap to target",
+            value: fmt(Math.abs(last - target)),
+          },
+        ]
+      : [{ label: "Change vs 12 mo ago", value: `${up ? "+" : ""}${deltaPct.toFixed(1)}%` }]),
+  ];
+
   return (
     <KpiTooltip
       onActivate={onOpen}
@@ -97,10 +123,10 @@ function WaveRow({
       info={{
         title: label,
         definition,
-        formula,
         current: value,
         previous: `${fmt(prev)} (previous month)`,
         ...d,
+        stats,
         lastUpdated: formatRefreshed(),
         action,
       }}
