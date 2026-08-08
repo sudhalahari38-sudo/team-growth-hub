@@ -15,6 +15,7 @@
  * based on the selected identity.
  */
 import type { TrainingRecord } from "./training-types";
+import { teamRows } from "./org-hierarchy";
 
 export type IdentityRole = "admin" | "leadership" | "manager";
 
