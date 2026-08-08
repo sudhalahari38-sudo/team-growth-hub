@@ -94,9 +94,23 @@ function KpiTile({
     previous !== undefined && currentNumber !== undefined
       ? deltaInfo(currentNumber, previous, higherIsBetter, unit)
       : {};
-  const fmtPrev =
-    previous !== undefined
-      ? `${unit === "%" ? previous.toFixed(1) : Math.round(previous).toLocaleString()}${unit} (last month)`
+  const fmtNum = (n: number) =>
+    `${unit === "%" ? n.toFixed(1) : Math.round(n).toLocaleString()}${unit}`;
+  const fmtPrev = previous !== undefined ? `${fmtNum(previous)} (last month)` : undefined;
+
+  const stats =
+    previous !== undefined && currentNumber !== undefined
+      ? [
+          { label: "Last month", value: fmtNum(previous) },
+          { label: "Change", value: fmtNum(currentNumber - previous) },
+          {
+            label: "Change %",
+            value: previous
+              ? `${currentNumber >= previous ? "+" : ""}${(((currentNumber - previous) / Math.abs(previous)) * 100).toFixed(1)}%`
+              : "—",
+          },
+          { label: "Direction", value: higherIsBetter ? "Higher is better" : "Lower is better" },
+        ]
       : undefined;
 
   return (
@@ -106,10 +120,10 @@ function KpiTile({
       info={{
         title: label,
         definition,
-        formula,
         current: String(value),
         previous: fmtPrev,
         ...cmp,
+        stats,
         lastUpdated: formatRefreshed(),
         action,
       }}
