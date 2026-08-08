@@ -84,6 +84,8 @@ function Dashboard() {
   const [impersonatedManager, setImpersonatedManager] = useState<string>("");
   /** Manager view scope: own reporting hierarchy vs read-only org-wide */
   const [teamScope, setTeamScope] = useState<"team" | "org">("team");
+  /** Within "My team": all, direct-only, or indirect-only reportees */
+  const [teamLevel, setTeamLevel] = useState<TeamLevel>("all");
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
