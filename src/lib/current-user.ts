@@ -83,7 +83,7 @@ export function applyRls<T extends { managerName: string }>(
   identity: Identity,
 ): T[] {
   if (canViewOrg(identity)) return rows;
-  return rows.filter((r) => r.managerName === identity.managerName);
+  return teamRows(rows, identity.managerName);
 }
 
 /* ----------------------------- Accounts & login ---------------------------- */
