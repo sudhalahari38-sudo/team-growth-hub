@@ -170,9 +170,6 @@ export function KpiCard({
           </div>
         )}
 
-        <div className="text-[10px] text-muted-foreground/80 font-mono leading-tight pt-2 border-t border-border/60">
-          <span className="text-muted-foreground/60">ƒ</span> {formula}
-        </div>
       </div>
     </Card>
   );
