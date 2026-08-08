@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+export interface KpiStat {
+  label: string;
+  value: string;
+}
+
 export interface KpiTooltipData {
   title: string;
   definition: string;
-  formula: string;
+  /** @deprecated no longer rendered — kept for call-site compatibility */
+  formula?: string;
   current: string;
   previous?: string;
   deltaLabel?: string;
@@ -12,6 +18,7 @@ export interface KpiTooltipData {
   deltaGood?: boolean;
   lastUpdated: string;
   action?: string;
+  stats?: KpiStat[];
 }
 
 const ARROW = { up: "↑", down: "↓", flat: "→" } as const;
