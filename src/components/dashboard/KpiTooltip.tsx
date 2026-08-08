@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+export interface KpiStat {
+  label: string;
+  value: string;
+}
+
 export interface KpiTooltipData {
   title: string;
   definition: string;
-  formula: string;
+  /** @deprecated no longer rendered — kept for call-site compatibility */
+  formula?: string;
   current: string;
   previous?: string;
   deltaLabel?: string;
@@ -12,6 +18,7 @@ export interface KpiTooltipData {
   deltaGood?: boolean;
   lastUpdated: string;
   action?: string;
+  stats?: KpiStat[];
 }
 
 const ARROW = { up: "↑", down: "↓", flat: "→" } as const;
@@ -52,9 +59,20 @@ export function KpiTooltip({
           <div className="text-[12px] font-semibold text-foreground">{info.title}</div>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{info.definition}</p>
 
-          <div className="mt-2 rounded-md bg-secondary/60 px-2.5 py-1.5 font-mono text-[10px] leading-snug text-muted-foreground">
-            <span className="text-muted-foreground/70">ƒ</span> {info.formula}
-          </div>
+          {info.stats && info.stats.length > 0 && (
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+              {info.stats.map((s) => (
+                <div key={s.label} className="rounded-md bg-secondary/60 px-2 py-1.5">
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground truncate">
+                    {s.label}
+                  </div>
+                  <div className="text-[11px] font-semibold tabular-nums text-foreground truncate">
+                    {s.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <dl className="mt-2.5 space-y-1 text-[11px]">
             <div className="flex items-center justify-between gap-3">
