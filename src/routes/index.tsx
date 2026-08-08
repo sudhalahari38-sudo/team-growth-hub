@@ -414,10 +414,41 @@ function Dashboard() {
                 </button>
               ))}
             </div>
+
+            {teamScope === "team" && (
+              <div className="inline-flex rounded-lg border border-border bg-secondary p-0.5">
+                {(
+                  [
+                    ["all", `All (${teamCounts.all})`],
+                    ["direct", `Direct (${teamCounts.direct})`],
+                    ["indirect", `Indirect (${teamCounts.indirect})`],
+                  ] as const
+                ).map(([lvl, lbl]) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setTeamLevel(lvl)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                      teamLevel === lvl
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <span className="text-[11px] text-muted-foreground">
-              {teamScope === "team"
-                ? `Direct & indirect reportees of ${identity.managerName}`
-                : "Organization-wide training data · read-only"}
+              {teamScope === "org"
+                ? "Organization-wide training data · read-only"
+                : teamLevel === "direct"
+                  ? `Employees reporting directly to ${identity.managerName}`
+                  : teamLevel === "indirect"
+                    ? `Employees under ${identity.managerName}'s reporting managers`
+                    : `Direct & indirect reportees of ${identity.managerName}`}
             </span>
           </div>
         )}
