@@ -122,17 +122,32 @@ function Dashboard() {
   const orgReadOnly = isManagerView && teamScope === "org";
 
   // RLS gate: manager view sees own team; "Organization" scope is read-only org-wide
-  const visibleData = useMemo(
+  const teamData = useMemo(
     () => (orgReadOnly ? data : applyRls(data, identity)),
     [data, identity, orgReadOnly],
   );
-  const visibleFeedback = useMemo(
+
+  // Direct vs indirect split within "My team"
+  const teamCounts = useMemo(() => {
+    const leader = identity.managerName;
+    const direct = teamData.filter((r) => reportingLine(r, leader) === "direct");
+    const indirect = teamData.filter((r) => reportingLine(r, leader) === "indirect");
+    return { all: teamData.length, direct: direct.length, indirect: indirect.length };
+  }, [teamData, identity.managerName]);
+
+  const visibleData = useMemo(
     () =>
-      isOrg || orgReadOnly
-        ? feedback
-        : feedback.filter((f) => f.managerName === identity.managerName),
-    [feedback, identity, isOrg, orgReadOnly],
+      isManagerView && !orgReadOnly
+        ? filterByTeamLevel(teamData, identity.managerName, teamLevel)
+        : teamData,
+    [teamData, identity.managerName, isManagerView, orgReadOnly, teamLevel],
   );
+
+  const visibleFeedback = useMemo(() => {
+    if (isOrg || orgReadOnly) return feedback;
+    const team = teamRows(feedback, identity.managerName);
+    return filterByTeamLevel(team, identity.managerName, teamLevel);
+  }, [feedback, identity, isOrg, orgReadOnly, teamLevel]);
 
 
   const filtered = useMemo(() => applyFilters(visibleData, filters), [visibleData, filters]);
