@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { ChevronDown, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,9 +44,8 @@ export function AutomationHistory({ runs }: { runs: AutomationRun[] }) {
               const nudgeTotal = r.nudges.reminder + r.nudges.warning + r.nudges.escalation;
               const isOpen = open === r.id;
               return (
-                <>
+                <React.Fragment key={r.id}>
                   <tr
-                    key={r.id}
                     className="border-t border-border hover:bg-secondary/60 cursor-pointer"
                     onClick={() => setOpen(isOpen ? null : r.id)}
                   >
@@ -149,7 +149,7 @@ export function AutomationHistory({ runs }: { runs: AutomationRun[] }) {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>
