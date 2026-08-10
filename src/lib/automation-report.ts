@@ -5,7 +5,7 @@ import type { TrainingRecord } from "./training-types";
 import { daysOverdue, isOverdue } from "./training-analytics";
 import { REPORT_TYPE_LABELS, type AutomationConfig, type AutomationRun } from "./automation-types";
 
-export interface ReportMetrics extends AutomationRun["metrics"] {}
+export type ReportMetrics = AutomationRun["metrics"];
 
 export function computeReportMetrics(rows: TrainingRecord[]): ReportMetrics {
   const totalAssigned = rows.length;
