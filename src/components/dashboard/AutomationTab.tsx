@@ -37,7 +37,12 @@ const TICK_MS = 60_000;
 
 function useAutomationState() {
   const [, force] = useState(0);
-  useEffect(() => subscribeAutomations(() => force((n) => n + 1)), []);
+  useEffect(() => {
+    const unsub = subscribeAutomations(() => force((n) => n + 1));
+    return () => {
+      unsub();
+    };
+  }, []);
   return { automations: listAutomations(), runs: listRuns() };
 }
 
