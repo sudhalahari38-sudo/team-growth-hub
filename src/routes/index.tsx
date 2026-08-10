@@ -53,6 +53,7 @@ import { TrainingCentricDashboard } from "@/components/dashboard/TrainingCentric
 import { ViewerSwitcher } from "@/components/dashboard/ViewerSwitcher";
 import { LoginScreen } from "@/components/dashboard/LoginScreen";
 
+import { AutomationTab, useAutomationScheduler } from "@/components/dashboard/AutomationTab";
 import { SettingsMenu } from "@/components/dashboard/SettingsMenu";
 import { syncPercipio } from "@/lib/percipio.functions";
 import { cn } from "@/lib/utils";
@@ -219,6 +220,9 @@ function Dashboard() {
     const id = window.setInterval(() => runSync(true), AUTO_SYNC_MS);
     return () => window.clearInterval(id);
   }, [autoSync]);
+
+  // Background compliance-report automations (admin only)
+  useAutomationScheduler(data, managerNames, isAdmin);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleUpload = async (file: File) => {
@@ -477,7 +481,7 @@ function Dashboard() {
         )}
 
 
-        {view !== "feedback" && (
+        {view !== "feedback" && view !== "automation" && (
           <ControlPanel
             filters={filters}
             setFilters={setFilters}
@@ -535,6 +539,15 @@ function Dashboard() {
         )}
 
         {view === "courses" && <CoursesTab data={filtered} />}
+
+        {view === "automation" && isAdmin && (
+          <AutomationTab
+            data={data}
+            managers={managerNames}
+            courses={options.courseNames}
+            departments={options.departments}
+          />
+        )}
 
 
         {view === "feedback" && (

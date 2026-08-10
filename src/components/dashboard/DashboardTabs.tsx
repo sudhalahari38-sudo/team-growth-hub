@@ -8,6 +8,7 @@ import {
   Building2,
   BarChart3,
   UsersRound,
+  Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { IdentityRole } from "@/lib/current-user";
@@ -19,7 +20,8 @@ export type DashboardView =
   | "at-risk"
   | "courses"
   | "feedback"
-  | "training";
+  | "training"
+  | "automation";
 
 interface Tab {
   id: DashboardView;
@@ -34,6 +36,7 @@ const ADMIN_TABS: Tab[] = [
   { id: "at-risk", label: "At-Risk Employees", icon: <AlertTriangle className="h-4 w-4" /> },
   { id: "courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   { id: "feedback", label: "Training Feedback", icon: <MessageSquareHeart className="h-4 w-4" /> },
+  { id: "automation", label: "Automation", icon: <Zap className="h-4 w-4" /> },
 ];
 
 const LEADERSHIP_TABS: Tab[] = [
